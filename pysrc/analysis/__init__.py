@@ -3,13 +3,13 @@ import numpy as np
 from pysrc.optimization import PlannerSolution
 
 
-def value_decomposition(
-    T: int,
+def compute_planner_value(
     pee: float,
     pa: float,
     b: float,
     theta: np.ndarray,
     solution: PlannerSolution,
+    T: int = 200,
     delta: float = 0.02,
     kappa: float = 2.094215255,
     zeta_u: float = 1.66e-4 * 1e9,
@@ -19,29 +19,29 @@ def value_decomposition(
     X_dot = np.diff(solution.X, axis=0)
 
     # Compute agricultural output
-    results_AO = [
+    agr_output = [
         pa * np.dot(solution.Z[t + 1], theta) / ((1 + delta) ** t) for t in range(T)
     ]
-    total_AO = np.sum(results_AO)
+    agr_output = np.sum(agr_output)
 
     # Compute net transfers
-    results_NT = [
+    net_transfers = [
         -b * (kappa * np.sum(solution.Z[t + 1]) - np.sum(X_dot[t])) / ((1 + delta) ** t)
         for t in range(T)
     ]
-    total_NT = np.sum(results_NT)
+    net_transfers = np.sum(net_transfers)
 
     # Compute forest services
-    results_FS = [
+    forest_services = [
         -pee
         * (kappa * np.sum(solution.Z[t + 1]) - np.sum(X_dot[t]))
         / ((1 + delta) ** t)
         for t in range(T)
     ]
-    total_FS = np.sum(results_FS)
+    forest_services = np.sum(forest_services)
 
     # Compute adjustment costs
-    results_AC = [
+    adj_costs = [
         (
             (zeta_u / 2) * (np.sum(solution.U[t])) ** 2
             + (zeta_v / 2) * (np.sum(solution.V[t])) ** 2
@@ -49,58 +49,57 @@ def value_decomposition(
         / ((1 + delta) ** t)
         for t in range(T)
     ]
-    total_AC = np.sum(results_AC)
+    adj_costs = np.sum(adj_costs)
 
     # Compute total net present value
-    total_PV = total_AO + total_NT + total_FS - total_AC
+    planner_value = agr_output + net_transfers + forest_services - adj_costs
 
     return {
-        "pa": pa,
-        "pee": pee,
+        "pe": pee + b,
         "b": b,
-        "total_AO": total_AO,
-        "total_NT": total_NT,
-        "total_FS": total_FS,
-        "total_AC": total_AC,
-        "total_PV": total_PV,
+        "agr_output": agr_output,
+        "net_transfers": net_transfers,
+        "forest_services": forest_services,
+        "adj_costs": adj_costs,
+        "planner_value": planner_value,
     }
 
 
-def transfers_decomposition(
-    Z,
-    X,
-    Z_base,
-    X_base,
+def compute_transfers(
+    res,
+    res_base,
+    pee: float,
     b,
     num_years,
     delta=0.02,
     kappa=2.094215255,
 ):
     # Compute change in X
-    X_dot = np.diff(X, axis=0)
-    X_dot_base = np.diff(X_base, axis=0)
+    X_dot = np.diff(res.X, axis=0)
+    X_dot_base = np.diff(res_base.X, axis=0)
 
     # Compute net captured emissions for base case
-    results_NCE_base = [
-        -kappa * Z_base[t + 1] + X_dot_base[t] for t in range(num_years)
+    net_emissions_base = [
+        -kappa * res_base.Z[t + 1] + X_dot_base[t] for t in range(num_years)
     ]
-    total_NCE_base = np.sum(results_NCE_base)
+    net_emissions_base = np.sum(net_emissions_base)
 
-    # Compute NCE
-    results_NCE = [-kappa * Z[t + 1] + X_dot[t] for t in range(num_years)]
-    total_NCE = np.sum(results_NCE)
+    # Compute net captured emissions
+    net_emissions = [-kappa * res.Z[t + 1] + X_dot[t] for t in range(num_years)]
+    net_emissions = np.sum(net_emissions)
 
-    results_NT2 = [
-        -b * (kappa * Z[t + 1] - X_dot[t]) / ((1 + delta) ** t)
+    net_transfers = [
+        -b * (kappa * res.Z[t + 1] - X_dot[t]) / ((1 + delta) ** t)
         for t in range(num_years)
     ]
-    total_NT2 = np.sum(results_NT2)
+    net_transfers = np.sum(net_transfers)
 
-    total_EC = total_NT2 / (total_NCE - total_NCE_base)
+    effective_cost = net_transfers / (net_emissions - net_emissions_base)
 
     return {
+        "pe": pee + b,
         "b": b,
-        "net captured emissions": total_NCE,
-        "discounted net transfers": total_NT2,
-        "discounted effective costs": total_EC,
+        "net captured emissions": net_emissions,
+        "discounted net transfers": net_transfers,
+        "discounted effective costs": effective_cost,
     }
