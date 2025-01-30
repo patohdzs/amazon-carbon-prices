@@ -4,6 +4,8 @@ import pickle
 import numpy as np
 import pandas as pd
 
+from pysrc.analysis import compute_planner_value, compute_transfers
+from pysrc.optimization import PlannerSolution
 from pysrc.services.data_service import load_productivity_params
 from pysrc.services.file_service import get_path
 
@@ -13,15 +15,15 @@ def format_float(value):
 
 
 def read_theta(num_sites):
-
     (theta_vals, gamma_vals) = load_productivity_params(num_sites)
     return theta_vals
 
 
 def read_file(result_directory):
-    
     Z = np.loadtxt(os.path.join(result_directory, "Z.txt"), delimiter=",")
-    X = np.sum(np.loadtxt(os.path.join(result_directory, "X.txt"), delimiter=","),axis=1)
+    X = np.sum(
+        np.loadtxt(os.path.join(result_directory, "X.txt"), delimiter=","), axis=1
+    )
     Xdot = np.diff(X, axis=0)
     U = np.loadtxt(os.path.join(result_directory, "U.txt"), delimiter=",")
     V = np.loadtxt(os.path.join(result_directory, "V.txt"), delimiter=",")
@@ -97,14 +99,9 @@ def value_decom(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, model="det", xi=1
         results_AC = []
         for i in range(200):
             result_AC = (
-                ((zeta_u / 2)
-                * (np.sum(dfu_np[i]) ) ** 2
-                +
-                (zeta_v / 2)
-                * (np.sum(dfv_np[i]) ) ** 2
-                )
-                / ((1 + 0.02) ** (i))
-            )
+                (zeta_u / 2) * (np.sum(dfu_np[i])) ** 2
+                + (zeta_v / 2) * (np.sum(dfv_np[i])) ** 2
+            ) / ((1 + 0.02) ** (i))
             results_AC.append(result_AC)
         total_AC = np.sum(results_AC)
 
@@ -158,7 +155,6 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="de
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    
     (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(baseline_folder)
 
     results_NCE_base = []
@@ -225,7 +221,9 @@ def transfer_cost(pee=7.1, num_sites=78, opt="gurobi", pa=41.11, y=30, model="de
     return
 
 
-def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41.11, xi=1):
+def ambiguity_decom(
+    pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41.11, xi=1
+):
     kappa = 2.094215255
     zeta_u = 1.66e-4 * 1e11
     zeta_v = 1.00e-4 * 1e11
@@ -279,14 +277,9 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
         results_AC = []
         for i in range(200):
             result_AC = (
-                ((zeta_u / 2)
-                * (np.sum(dfu_np[i]) ) ** 2
-                +
-                (zeta_v / 2)
-                * (np.sum(dfv_np[i]) ) ** 2
-                )
-                / ((1 + 0.02) ** (i))
-            )
+                (zeta_u / 2) * (np.sum(dfu_np[i])) ** 2
+                + (zeta_v / 2) * (np.sum(dfv_np[i])) ** 2
+            ) / ((1 + 0.02) ** (i))
             results_AC.append(result_AC)
         total_AC = np.sum(results_AC)
 
@@ -357,14 +350,9 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
         results_AC = []
         for i in range(200):
             result_AC = (
-                ((zeta_u / 2)
-                * (np.sum(dfu_np[i]) ) ** 2
-                +
-                (zeta_v / 2)
-                * (np.sum(dfv_np[i]) ) ** 2
-                )
-                / ((1 + 0.02) ** (i))
-            )
+                (zeta_u / 2) * (np.sum(dfu_np[i])) ** 2
+                + (zeta_v / 2) * (np.sum(dfv_np[i])) ** 2
+            ) / ((1 + 0.02) ** (i))
             results_AC.append(result_AC)
         total_AC = np.sum(results_AC)
 
@@ -413,7 +401,9 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
     zeta_u = 1.66e-4 * 1e11
     zeta_v = 1.00e-4 * 1e11
     dft_np = read_theta(num_sites)
-    df_ori = pd.read_csv(str(get_path("data")) + "/calibration/hmc/calibration_78_sites.csv")
+    df_ori = pd.read_csv(
+        str(get_path("data")) + "/calibration/hmc/calibration_78_sites.csv"
+    )
     x0 = df_ori["x_2017_78Sites"].to_numpy()
 
     output_folder = str(get_path("output")) + "/tables/"
@@ -530,14 +520,9 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
             results_AC = []
             for i in range(200):
                 result_AC = (
-                    ((zeta_u / 2)
-                    * (np.sum(dfu_np[i]) ) ** 2
-                    +
-                    (zeta_v / 2)
-                    * (np.sum(dfv_np[i]) ) ** 2
-                    )
-                    / ((1 + 0.02) ** (i))
-                )
+                    (zeta_u / 2) * (np.sum(dfu_np[i])) ** 2
+                    + (zeta_v / 2) * (np.sum(dfv_np[i])) ** 2
+                ) / ((1 + 0.02) ** (i))
                 results_AC.append(result_AC)
             total_AC = np.sum(results_AC)
 
@@ -600,3 +585,88 @@ def value_decom_mpc(pee=6.9, num_sites=78, opt="gams", model="unconstrained", b=
         file.write(summary_table_df.to_latex(index=False))
 
     return print("done")
+
+
+def make_pvd_table(
+    results: list[PlannerSolution], pee: float, pa: float, theta: np.ndarray
+):
+    planner_pvs = [
+        compute_planner_value(pee, pa, b, theta, res)
+        for b, res in zip(range(0, 30, 5), results)
+    ]
+
+    pvd_table = pd.DataFrame(planner_pvs)
+
+    # Custom LaTeX column names
+    latex_column_names = [
+        r"\makecell[c]{$P^e$ \\ $(\$)$}",
+        r"\makecell[c]{$b$ \\ $(\$)$}",
+        r"\makecell[c]{Agricultural \\ output value \\ ($\$$ billion)}",
+        r"\makecell[c]{Net \\ transfers \\ ($\$$ billion)}",
+        r"\makecell[c]{Forest \\ services \\ ($\$$ billion)}",
+        r"\makecell[c]{Adjustment \\ costs \\ ($\$$ billion)}",
+        r"\makecell[c]{Planner \\ value \\ ($\$$ billion)}",
+    ]
+
+    # Rename the dataframe columns temporarily for LaTeX export
+    pvd_table.columns = latex_column_names
+
+    # Generate LaTeX table
+    latex_table = pvd_table.to_latex(index=False, escape=False, float_format="%.2f")
+
+    return latex_table
+
+
+def make_transfers_table(results: list[PlannerSolution], pee: float):
+    transfers_15 = [
+        compute_transfers(res, results[0], pee, b, 15)
+        for b, res in zip(range(0, 30, 5), results)
+    ]
+
+    transfers_30 = [
+        compute_transfers(res, results[0], pee, b, 30)
+        for b, res in zip(range(0, 30, 5), results)
+    ]
+
+    transfers_15 = pd.DataFrame(transfers_15)
+    transfers_30 = pd.DataFrame(transfers_30)
+
+    table_df = transfers_15.join(transfers_30, rsuffix="_30").drop(
+        columns=["pe_30", "b_30"]
+    )
+
+    # Custom LaTeX column names
+    latex_column_names = [
+        r"\makecell[c]{$P^e$ \\ (\$)}",
+        r"\makecell[c]{$b$ \\ (\$)}",
+        r"\makecell[c]{Net captured \\ emissions \\ (CO$_2$e Gt)}",
+        r"\makecell[c]{Discounted \\ net transfers \\  (\$ billion)}",
+        r"\makecell[c]{Discounted \\ effective cost \\ (\$ per ton \\ of CO$_2$e)}",
+        r"\makecell[c]{Net captured \\ emissions \\ (CO$_2$e Gt)}",
+        r"\makecell[c]{Discounted \\ net transfers \\ (\$ billion)}",
+        r"\makecell[c]{Discounted \\ effective cost \\ (\$ per ton \\ of CO$_2$e)}",
+    ]
+
+    # Rename the dataframe columns temporarily for LaTeX export
+    table_df.columns = latex_column_names
+
+    # Convert the DataFrame to a LaTeX table
+    latex_table = table_df.to_latex(
+        index=False,
+        column_format="cccccccc",
+        escape=False,
+        float_format="%.2f",
+        na_rep="–",
+    )
+
+    # Add the table structure and rules
+    latex_table = latex_table.replace(
+        "\\toprule",
+        "\\toprule\n"
+        + "&& \\multicolumn{3}{c}{15 years} "
+        + "& \\multicolumn{3}{c}{30 years} \\\\\n"
+        + "\\cmidrule[1pt](r){3-5} "
+        + "\\cmidrule[1pt](r){6-8}",
+    )
+    latex_table = latex_table.replace("\\midrule", "\\midrule\n")
+    return latex_table

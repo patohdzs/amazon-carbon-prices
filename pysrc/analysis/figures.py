@@ -9,6 +9,21 @@ import seaborn as sns
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
 
+# Allow TeX for plotting
+plt.rcParams["text.usetex"] = True
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "serif",
+        "font.size": 10,
+        "axes.labelsize": 10,
+        "axes.titlesize": 10,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "legend.fontsize": 8,
+    }
+)
+
 
 def land_allocation(pee=7.6, num_sites=1043, opt="gurobi", pa=41.11, model="det", xi=1):
     # Set transfer levels
@@ -364,28 +379,101 @@ def trajectory_diff(
     return
 
 
-def plot_transfers(results_15, results_25, kappa=2.094215255):
-    for b, results in zip([15, 25], [results_15, results_25]):
-        kappa = 2.094215255
-        X = results.X
-        Z = results.Z
+def plot_agg_land_use(results_0, results_15, results_25, zbar):
+    # Compute aggregate land use as a percentage of site area
+    pct_Z_0 = 100 * (results_0.Z.sum(axis=1) / zbar.sum())
+    pct_Z_15 = 100 * (results_15.Z.sum(axis=1) / zbar.sum())
+    pct_Z_25 = 100 * (results_25.Z.sum(axis=1) / zbar.sum())
 
-        # Compute X_dot
-        X_dot = np.diff(X, axis=0)
-        print(X_dot[0].sum())
-
-        # Compute transfers
-        transfers = -b * (kappa * Z[1:] - X_dot).sum(axis=1)
-
-        # Plotting transfers
-        plt.plot(transfers[:50], label=f"b=${b}")
+    # Plotting the agricultural land use trajectories
+    fig = plt.figure(figsize=_set_size())
+    plt.plot(pct_Z_0[:50], color="red", label=r"b=\$0")
+    plt.plot(pct_Z_15[:50], color="green", label=r"b=\$15")
+    plt.plot(pct_Z_25[:50], color="blue", label=r"b=\$25")
 
     # Adding legend
     plt.legend()
 
     # Adding labels and title
     plt.xlabel("Time (years)")
-    plt.ylabel("Net Transfers ($ billion)")
+    plt.ylabel(r"$Z_t$ (\%)")
+    return fig
 
-    # Save figure
-    plt.savefig(get_path("output") / "figures/net_transfers.png")
+
+def plot_agg_carbon_stock(results_0, results_15, results_25):
+    # Plotting the carbon stock trajectories
+    fig = plt.figure(figsize=_set_size())
+    plt.plot(results_0.X.sum(axis=1)[:50], color="red", label=r"b=\$0")
+    plt.plot(results_15.X.sum(axis=1)[:50], color="green", label=r"b=\$15")
+    plt.plot(results_25.X.sum(axis=1)[:50], color="blue", label=r"b=\$25")
+
+    # Adding legend
+    plt.legend()
+
+    # Adding labels and title
+    plt.xlabel("Time (years)")
+    plt.ylabel(r"$X_t$ (CO$_2$e Gt)")
+    return fig
+
+
+def plot_transfers(results_15, results_25, kappa=2.094215255):
+    fig = plt.figure(figsize=_set_size())
+
+    for b, res, color in zip([15, 25], [results_15, results_25], ["red", "blue"]):
+        kappa = 2.094215255
+
+        # Get X and Z trajectories
+        X = res.X
+        Z = res.Z
+
+        # Compute X_dot
+        X_dot = np.diff(X, axis=0)
+
+        # Compute net transfers
+        transfers = -b * (kappa * Z[1:] - X_dot).sum(axis=1)
+
+        # Plot net transfers
+        plt.plot(transfers[:50], color=color, label=rf"b=\${b}")
+
+    # Adding legend
+    plt.legend()
+
+    # Adding labels and title
+    plt.xlabel("Time (years)")
+    plt.ylabel(r"Net Transfers (\$ billion)")
+
+    return fig
+
+
+def _set_size(width=397.485, scale=0.5):
+    """
+    Parameters
+    ----------
+    width: float
+            Document textwidth or columnwidth in pts
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    # Width of figure (in pts)
+    fig_width_pt = width * scale
+
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    golden_ratio = (5**0.5 - 1) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+
+    # Figure height in inches
+    fig_height_in = fig_width_in * golden_ratio
+
+    fig_dim = (fig_width_in, fig_height_in)
+
+    return fig_dim

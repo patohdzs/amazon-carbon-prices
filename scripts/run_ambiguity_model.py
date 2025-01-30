@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from pysrc.analysis import value_decomposition
+from pysrc.analysis import compute_planner_value
 from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data
@@ -92,7 +92,7 @@ for pe in pe_values:
 
     print(
         "result",
-        value_decomposition(
+        compute_planner_value(
             Z=results.Z,
             X=results.X,
             U=results.U,
