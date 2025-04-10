@@ -1,4 +1,3 @@
-import math
 import time
 from dataclasses import dataclass
 
@@ -35,6 +34,7 @@ def solve_planner_problem(
     time_horizon=200,
     price_emissions=20.76,
     price_cattle=44.75,
+    tfff_rent=0,
     alpha=0.045007414,
     delta=0.02,
     kappa=2.094215255,
@@ -56,6 +56,7 @@ def solve_planner_problem(
     model.theta = Param(model.S, initialize=_np_to_dict(theta))
     model.delta = Param(initialize=delta)
     model.pe = Param(initialize=price_emissions)
+    model.tfff_rent = Param(initialize=tfff_rent)
 
     # Set cattle price as series
     if isinstance(price_cattle, float):
@@ -82,12 +83,14 @@ def solve_planner_problem(
     # Auxilary variables
     model.w1 = Var(model.T)
     model.w2 = Var(model.T)
+    model.tfff = Var(model.T, within=pyo.NonNegativeReals)
 
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
     model.w1_def = Constraint(model.T, rule=_w1_const)
     model.w2_def = Constraint(model.T, rule=_w2_const)
+    model.tfff_def = Constraint(model.T, rule=_tfff_const)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -134,18 +137,23 @@ def vectorize_trajectories(traj: PlannerSolution):
 
 def _planner_obj(model):
     return pyo.quicksum(
-        math.exp(-model.delta * (t * model.dt - model.dt))
+        pyo.exp(-model.delta * (t * model.dt - model.dt))
         * (
+            # Emissions pricing
             -model.pe
             * pyo.quicksum(
                 model.kappa * model.z[t + 1, s]
                 - (model.x[t + 1, s] - model.x[t, s]) / model.dt
                 for s in model.S
             )
+            # Cattle ranching income
             + model.pa[t]
             * pyo.quicksum(model.theta[s] * model.z[t + 1, s] for s in model.S)
+            # Adjustment costs
             - (model.zeta_u / 2) * (model.w1[t] ** 2)
             - (model.zeta_v / 2) * (model.w2[t] ** 2)
+            # TFFF scheme rents + penalties
+            + model.tfff[t]
         )
         * model.dt
         for t in model.T
@@ -185,6 +193,30 @@ def _w2_const(model, t):
         return model.w2[t] == pyo.quicksum(model.v[t, s] for s in model.S)
     else:
         return Constraint.Skip
+
+
+def _tfff_const(model, t):
+    if t < max(model.T):
+        return model.tfff[t] == max(
+            model.tfff_rent
+            * sum(model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S),
+            0,
+        )
+    return pyo.Constraint.Skip
+
+
+def _approx_tfff(model, t, eps=1):
+    # NOTE:
+    # This function serves as a smooth approximation to the following
+    # max(0, tfff_rent * sum(zbar_s - 101 z_s))
+    return eps * pyo.log(
+        1
+        + pyo.exp(
+            model.tfff_rent
+            * sum(model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S)
+            / eps
+        )
+    )
 
 
 def _np_to_dict(x):
