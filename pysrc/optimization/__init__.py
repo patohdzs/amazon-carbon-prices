@@ -90,7 +90,8 @@ def solve_planner_problem(
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
     model.w1_def = Constraint(model.T, rule=_w1_const)
     model.w2_def = Constraint(model.T, rule=_w2_const)
-    model.tfff_def = Constraint(model.T, rule=_tfff_const)
+    model.tfff_1_def = Constraint(model.T, rule=_tfff_const_1)
+    model.tfff_2_def = Constraint(model.T, rule=_tfff_const_2)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -195,13 +196,17 @@ def _w2_const(model, t):
         return Constraint.Skip
 
 
-def _tfff_const(model, t):
+def _tfff_const_1(model, t):
     if t < max(model.T):
-        return model.tfff[t] == max(
-            model.tfff_rent
-            * sum(model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S),
-            0,
+        return model.tfff[t] >= model.tfff_rent * sum(
+            model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S
         )
+    return pyo.Constraint.Skip
+
+
+def _tfff_const_2(model, t):
+    if t < max(model.T):
+        return model.tfff[t] >= 0
     return pyo.Constraint.Skip
 
 
