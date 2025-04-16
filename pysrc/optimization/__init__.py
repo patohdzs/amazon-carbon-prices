@@ -84,14 +84,18 @@ def solve_planner_problem(
     model.w1 = Var(model.T)
     model.w2 = Var(model.T)
     model.tfff = Var(model.T, within=pyo.NonNegativeReals)
+    model.tfff_active = pyo.Var(domain=pyo.Binary)
 
     # Constraints
     model.zdot_def = Constraint(model.T, model.S, rule=_zdot_const)
     model.xdot_def = Constraint(model.T, model.S, rule=_xdot_const)
     model.w1_def = Constraint(model.T, rule=_w1_const)
     model.w2_def = Constraint(model.T, rule=_w2_const)
-    model.tfff_1_def = Constraint(model.T, rule=_tfff_const_1)
-    model.tfff_2_def = Constraint(model.T, rule=_tfff_const_2)
+    model.tfff_def = Constraint(model.T, rule=_tfff_const)
+
+    # Big-M constraints
+    model.big_m_1 = Constraint(model.T, rule=_tfff_big_m_const_1)
+    model.big_m_2 = Constraint(model.T, rule=_tfff_big_m_const_2)
 
     # Define the objective
     model.obj = Objective(rule=_planner_obj, sense=maximize)
@@ -154,7 +158,7 @@ def _planner_obj(model):
             - (model.zeta_u / 2) * (model.w1[t] ** 2)
             - (model.zeta_v / 2) * (model.w2[t] ** 2)
             # TFFF scheme rents + penalties
-            + model.tfff[t]
+            + model.tfff_active * model.tfff[t]
         )
         * model.dt
         for t in model.T
@@ -196,11 +200,25 @@ def _w2_const(model, t):
         return Constraint.Skip
 
 
-def _tfff_const_1(model, t):
+def _tfff_const(model, t):
     if t < max(model.T):
-        return model.tfff[t] >= model.tfff_rent * sum(
+        return model.tfff[t] == model.tfff_rent * pyo.quicksum(
             model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S
         )
+    return pyo.Constraint.Skip
+
+
+def _tfff_big_m_const_1(model, t):
+    M = 1e12
+    if t < max(model.T):
+        return model.tfff[t] <= M * model.tfff_active
+    return pyo.Constraint.Skip
+
+
+def _tfff_big_m_const_2(model, t):
+    M = 1e12
+    if t < max(model.T):
+        return model.tfff[t] >= -M * (1 - model.tfff_active)
     return pyo.Constraint.Skip
 
 

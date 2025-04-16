@@ -7,7 +7,9 @@ def compute_planner_value(
     pee: float,
     pa: float,
     b: float,
+    r: float,
     theta: np.ndarray,
+    zbar: np.ndarray,
     solution: PlannerSolution,
     T: int = 200,
     delta: float = 0.02,
@@ -51,8 +53,15 @@ def compute_planner_value(
     ]
     adj_costs = np.sum(adj_costs)
 
+    tfff = [
+        r * max(np.sum(zbar - 101 * solution.Z[t + 1]), 0) / ((1 + delta) ** t)
+        for t in range(T)
+    ]
+
+    tfff = np.sum(tfff)
+
     # Compute total net present value
-    planner_value = agr_output + net_transfers + forest_services - adj_costs
+    planner_value = agr_output + net_transfers + forest_services - adj_costs + tfff
 
     return {
         "pe": pee + b,
@@ -61,6 +70,7 @@ def compute_planner_value(
         "net_transfers": net_transfers,
         "forest_services": forest_services,
         "adj_costs": adj_costs,
+        "tfff": tfff,
         "planner_value": planner_value,
     }
 
