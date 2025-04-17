@@ -83,7 +83,7 @@ def solve_planner_problem(
     # Auxilary variables
     model.w1 = Var(model.T)
     model.w2 = Var(model.T)
-    model.tfff = Var(model.T, within=pyo.NonNegativeReals)
+    model.tfff = Var(model.T, within=pyo.Reals)
     model.tfff_active = pyo.Var(domain=pyo.Binary)
 
     # Constraints
@@ -112,6 +112,10 @@ def solve_planner_problem(
 
     # Solve the model
     opt = SolverFactory(solver)
+
+    # Set the NonConvex parameter to 2
+    opt.options["NonConvex"] = 2
+
     print("Solving the optimization problem...")
     start_time = time.time()
     if solver == "gams":
@@ -209,37 +213,17 @@ def _tfff_const(model, t):
 
 
 def _tfff_big_m_const_1(model, t):
-    M = 1e12
+    M = 1e8
     if t < max(model.T):
         return model.tfff[t] <= M * model.tfff_active
     return pyo.Constraint.Skip
 
 
 def _tfff_big_m_const_2(model, t):
-    M = 1e12
+    M = 1e8
     if t < max(model.T):
         return model.tfff[t] >= -M * (1 - model.tfff_active)
     return pyo.Constraint.Skip
-
-
-def _tfff_const_2(model, t):
-    if t < max(model.T):
-        return model.tfff[t] >= 0
-    return pyo.Constraint.Skip
-
-
-def _approx_tfff(model, t, eps=1):
-    # NOTE:
-    # This function serves as a smooth approximation to the following
-    # max(0, tfff_rent * sum(zbar_s - 101 z_s))
-    return eps * pyo.log(
-        1
-        + pyo.exp(
-            model.tfff_rent
-            * sum(model.zbar[s] - 101 * model.z[t + 1, s] for s in model.S)
-            / eps
-        )
-    )
 
 
 def _np_to_dict(x):

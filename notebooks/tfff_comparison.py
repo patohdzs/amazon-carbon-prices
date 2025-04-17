@@ -38,11 +38,11 @@ solve_tfff_problem = partial(
     price_emissions=pee,
 )
 
-
-res_0 = solve_tfff_problem()
+# Solve baseline problem
+res_baseline = solve_tfff_problem()
 
 # Compute aggregate land use as a percentage of site area
-pct_Z_0 = 100 * (res_0.Z.sum(axis=1) / zbar.sum())
+pct_Z_0 = 100 * (res_baseline.Z.sum(axis=1) / zbar.sum())
 
 # Plotting the agricultural land use trajectories
 fig = plt.figure()
@@ -56,8 +56,8 @@ plt.xlabel("Time (years)")
 plt.ylabel(r"$Z_t$ (%)")
 
 
-# Solve TFFF problem for $4 rent
-tfff_rent = 2
+# Solve TFFF problem
+tfff_rent = 5
 res = solve_tfff_problem(tfff_rent=tfff_rent)
 
 # Compute aggregate land use as a percentage of site area
@@ -84,7 +84,7 @@ value_baseline = compute_planner_value(
     r=0,
     theta=theta,
     zbar=zbar,
-    solution=res_0,
+    solution=res_baseline,
 )
 
 value_tfff = compute_planner_value(
@@ -96,13 +96,14 @@ value_tfff = compute_planner_value(
     zbar=zbar,
     solution=res,
 )
+print(f"value baseline: {value_baseline}")
+print(f"value tfff: {value_tfff}")
 
 
 f = tfff_rent * np.sum(zbar)
-discount_factor = 1 / 1.02
-periods = 200
+delta = 0.02
 
 # Sum of geometric series: f * (1 - r^n) / (1 - r)
-total_payoff = f * (1 - discount_factor**periods) / (1 - discount_factor)
+total_payoff = sum(f / ((1 + delta) ** t) for t in range(T))
 
-print(f"Total discounted payoff over {periods} periods: {total_payoff}")
+print(f"Total discounted payoff over {T} periods: {total_payoff}")
