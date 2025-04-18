@@ -44,7 +44,7 @@ echo "\$SLURM_JOB_NAME"
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_rp/project-amazon/pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee}
+python3 -u /project/lhansen/HMC_final/project-amazon/pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee}
 echo "Program ends \$(date)"
 end_time=\$(date +%s)
 elapsed=\$((end_time - start_time))

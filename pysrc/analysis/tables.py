@@ -451,7 +451,7 @@ def ambiguity_decom(pe_det=7.1, pe_hmc=5.3, num_sites=78, solver="gurobi", pa=41
     latex_code = combined_df.applymap(lambda x: f"{x:.2f}").to_latex(index=False)
 
     with open(
-        output_folder + "present_value_site_ambiguity_comparison.tex", "w"
+        output_folder + f"present_value_site_ambiguity_comparison_xi_{xi}.tex", "w"
     ) as file:
         file.write(latex_code)
 

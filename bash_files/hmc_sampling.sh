@@ -1,12 +1,13 @@
 
-xiarray=(10000)
-idarray=(5)
+xiarray=(1 5 10000)
+idarray=(0 10 15 20 25)
+peearray=(4.5 6.6)
 
 sites=1043
-pee=4.5
 
-for xi in "${xiarray[@]}"; do
-    for id in "${idarray[@]}"; do
+for pee in "${peearray[@]}"; do
+    for xi in "${xiarray[@]}"; do
+        for id in "${idarray[@]}"; do
    
                             count=0
                                         
@@ -44,7 +45,7 @@ echo "\$SLURM_JOB_NAME"
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_rp/project-amazon/pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee}
+python3 -u /project/lhansen/HMC_final/project-amazon/pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee}
 echo "Program ends \$(date)"
 end_time=\$(date +%s)
 elapsed=\$((end_time - start_time))
@@ -54,6 +55,6 @@ eval "echo Elapsed time: \$(date -ud "@\$elapsed" +'\$((%s/3600/24)) days %H hr 
 EOF
     count=$(($count + 1))
     sbatch ./bash/${action_name}/site_${sites}/pee_${pee}/xi_${xi}/id_${id}/run.sh
-
+        done
     done
 done

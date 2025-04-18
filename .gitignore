@@ -6,8 +6,11 @@
 data/
 results/
 
+
 # jobouts
 job-outs/
+# bash/
+
 
 # Gams license
 gams_file/gams45.1_linux_x64_64_sfx

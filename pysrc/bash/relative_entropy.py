@@ -8,7 +8,8 @@ from scipy.stats import gaussian_kde
 from scipy.stats import entropy
 import geopandas as gpd
 import pandas as pd
-
+from tqdm import tqdm
+from pysrc.analysis.figures import land_allocation,density,trajectory_diff
 from matplotlib.backends.backend_pdf import PdfPages
 import sys
 from pysrc.services.file_service import get_path
@@ -43,7 +44,7 @@ prior_folder = os.path.join(
     solver,
     f"{num_sites}sites",
     f"pa_{pa}",
-    "xi_10000",
+    "xi_10000.0",
 )
 
 with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
@@ -67,68 +68,49 @@ gamma_adjusted_b15 = b15["final_sample"][:16000, num_sites:]
 
 
 
-b = [0, 15]
-theta_list = [theta_adjusted_b0, theta_adjusted_b15]
-gamma_list = [gamma_adjusted_b0, gamma_adjusted_b15]
-theta_hmc_list = ['theta_b0', 'theta_b15']
-gamma_hmc_list = ['gamma_b0', 'gamma_b15']
+def compute_kl(unadj, adj):
+    common_grid = np.linspace(min(unadj.min(), adj.min()), max(unadj.max(), adj.max()), 1000)
+    p = gaussian_kde(unadj, bw_method='scott')(common_grid) + 1e-20
+    q = gaussian_kde(adj, bw_method='scott')(common_grid) + 1e-20
+    return entropy(p, q)
 
+kl_data = {"id": np.arange(1, num_sites + 1)}
 
-kl_divergences = []
+print("Computing theta KL divergences...")
+for label, theta_hmc in zip(['theta_b0', 'theta_b15'], [theta_adjusted_b0, theta_adjusted_b15]):
+    kl_data[label] = [
+        compute_kl(theta_unadjusted[:, i], theta_hmc[:, i])
+        for i in tqdm(range(num_sites), desc=label)
+    ]
 
-for order, theta_hmc in enumerate(theta_list):
-    for idx in range(theta_hmc.shape[1]):
-        kde_func_unadjusted = gaussian_kde(theta_unadjusted[:, idx], bw_method='scott')
-        kde_func_adjusted = gaussian_kde(theta_hmc[:, idx], bw_method='scott')
+print("Computing gamma KL divergences...")
+for label, gamma_hmc in zip(['gamma_b0', 'gamma_b15'], [gamma_adjusted_b0, gamma_adjusted_b15]):
+    kl_data[label] = [
+        compute_kl(gamma_unadjusted[:, i], gamma_hmc[:, i])
+        for i in tqdm(range(num_sites), desc=label)
+    ]
 
-        common_grid = np.linspace(min(theta_unadjusted[:, idx].min(), theta_hmc[:, idx].min()),
-                                  max(theta_unadjusted[:, idx].max(), theta_hmc[:, idx].max()),
-                                  1000)
-        density_unadjusted = kde_func_unadjusted(common_grid)
-        density_adjusted = kde_func_adjusted(common_grid)
-        density_unadjusted += 1e-20
-        density_adjusted += 1e-20
+kl_df = pd.DataFrame(kl_data)
 
-        kl_div = entropy(density_unadjusted, density_adjusted)
-        print(f'Site {idx + 1} Theta KL Divergence (b = {b[order]}): {kl_div}')
+output_folder = str(get_path("output")) + f"/figures/entropy/site_{num_sites}/xi{xi}/"
+os.makedirs(output_folder, exist_ok=True)
+kl_df.to_csv(output_folder + 'kl_divergences_theta_gamma.csv', index=False)
 
-        kl_divergences.append({'Parameter': theta_hmc_list[order], 'Site': idx + 1, 'KL_Divergence': kl_div})
+# ------------------------
+# Top-2 divergent sites per column
+# ------------------------
+top_kl_divergences = {}
+for col in ['theta_b0', 'theta_b15', 'gamma_b0', 'gamma_b15']:
+    top_sites = kl_df.nlargest(2, col)
+    top_kl_divergences[col] = top_sites[['id', col]].values.tolist()
 
+print("Top 2 KL divergences per parameter:")
+for param, top in top_kl_divergences.items():
+    for site, value in top:
+        print(f"{param}: id {int(site)} → KL = {value:.4f}")
+        
+        
+        
+print("start plot densities")
 
-for order, gamma_hmc in enumerate(gamma_list):
-    for idx in range(gamma_hmc.shape[1]):
-        kde_func_unadjusted = gaussian_kde(gamma_unadjusted[:, idx], bw_method='scott')
-        kde_func_adjusted = gaussian_kde(gamma_hmc[:, idx], bw_method='scott')
-
-        common_grid = np.linspace(min(gamma_unadjusted[:, idx].min(), gamma_hmc[:, idx].min()),
-                                  max(gamma_unadjusted[:, idx].max(), gamma_hmc[:, idx].max()),
-                                  1000)
-        density_unadjusted = kde_func_unadjusted(common_grid)
-        density_adjusted = kde_func_adjusted(common_grid)
-        density_unadjusted += 1e-20
-        density_adjusted += 1e-20
-
-        kl_div = entropy(density_unadjusted, density_adjusted)
-        print(f'Site {idx + 1} Gamma KL Divergence (b = {b[order]}): {kl_div}')
-
-        kl_divergences.append({'Parameter': gamma_hmc_list[order], 'Site': idx + 1, 'KL_Divergence': kl_div})
-
-
-
-output_folder = str(get_path("output")) + f"/figures/density/site_{num_sites}/xi{xi}/"
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-
-
-kl_df = pd.DataFrame(kl_divergences)
-kl_df.to_csv(output_folder+'kl_divergences_theta_gamma.csv', index=False)
-
-
-top_kl_divergences = []
-
-for parameter in kl_df['Parameter'].unique():
-    top_sites = kl_df[kl_df['Parameter'] == parameter].nlargest(2, 'KL_Divergence')
-    top_kl_divergences.append(top_sites)
-
-# Concatenate all the top results
-print("top2 kl",top_kl_divergences)
+density(num_sites=1043,pee=4.5,xi=5.0,solver="gams")
