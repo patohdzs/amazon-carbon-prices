@@ -43,7 +43,7 @@ echo "\$SLURM_JOB_NAME"
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_rp/project-amazon/scripts/sample_baseline_gamma.py
+python3 -u /project/lhansen/HMC_final/project-amazon/scripts/sample_baseline_gamma.py
 
 
 echo "Program ends \$(date)"

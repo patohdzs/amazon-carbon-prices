@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from pysrc.services.data_service import load_site_data
+from pysrc.services.data_service import load_site_data,load_productivity_params
 from pysrc.services.file_service import get_path
+from pysrc.optimization import PlannerSolution, solve_planner_problem
 
 
 def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="det", xi=1):
@@ -176,7 +177,16 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
         f"pa_{pa}",
         "xi_10000",
     )
-
+    if not os.path.exists(prior_folder):
+        prior_folder = os.path.join(
+            str(get_path("output")),
+            "sampling",
+            solver,
+            f"{num_sites}sites",
+            f"pa_{pa}",
+            "xi_10000.0",
+        )
+    
     with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
         b0 = pickle.load(f)
 
@@ -326,7 +336,7 @@ def trajectory_diff(
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     df_ori = pd.read_csv(
-        str(get_path("data")) + f"/calibration/calibration_{num_sites}_sites.csv"
+        str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv"
     )
     dfz_bar = df_ori["zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
@@ -389,7 +399,46 @@ def trajectory_diff(
     return
 
 
-def plot_transfers(results_15, results_25, kappa=2.094215255):
+def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215255):
+    
+    
+    
+    (
+        zbar_2017,
+        z_2017,
+        forest_area_2017,
+    ) = load_site_data(num_sites)
+
+    (theta_vals, gamma_vals) = load_productivity_params(num_sites)
+
+    x0_vals = gamma_vals * forest_area_2017
+
+        
+
+    results_15=solve_planner_problem(
+            time_horizon=200,
+            theta=theta_vals,
+            gamma=gamma_vals,
+            x0=x0_vals,
+            zbar=zbar_2017,
+            z0=z_2017,
+            price_emissions=pee+15,
+            price_cattle=pa,
+            solver=solver,
+        )
+    
+    results_25=solve_planner_problem(
+            time_horizon=200,
+            theta=theta_vals,
+            gamma=gamma_vals,
+            x0=x0_vals,
+            zbar=zbar_2017,
+            z0=z_2017,
+            price_emissions=pee+25,
+            price_cattle=pa,
+            solver=solver,
+        )
+    
     for b, results in zip([15, 25], [results_15, results_25]):
         kappa = 2.094215255
         X = results.X

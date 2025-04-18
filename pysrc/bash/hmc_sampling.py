@@ -19,6 +19,9 @@ xi=args.xi
 b=args.id
 num_sites=args.sites
 
+if xi==1:
+    pee=2.2
+
 pe = pee + b
 solver="gams"
 pa=41.11

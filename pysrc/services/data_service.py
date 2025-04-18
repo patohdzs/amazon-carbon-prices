@@ -7,7 +7,7 @@ from ..services.file_service import get_path
 
 def load_site_data(num_sites: int, norm_fac: float = 1e9):
     # Set data directory
-    data_dir = get_path("data", "calibration")
+    data_dir = get_path("data", "calibration","hmc")
 
     # Read data file
     file_path = data_dir / f"calibration_{num_sites}_sites.csv"
@@ -68,7 +68,7 @@ def load_price_data():
 
 def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     # Set data directory
-    data_dir = get_path("data", "calibration")
+    data_dir = get_path("data", "calibration","hmc")
 
     # Read data file
     file_path = data_dir / f"calibration_{num_sites}_sites.csv"
