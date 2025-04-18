@@ -9,20 +9,21 @@
 # > NOTES
 # 1: -
 
-install.packages("animation")
-library(animation)
-install.packages("png")
-library(png)
-install.packages("patchwork")
-library(patchwork)
-install.packages("cowplot")
-library(cowplot)
-conflicts_prefer(patchwork::area)
-
 # SETUP
+library(sf)
+library(ggplot2)
+library(readr)
+library(dplyr)
 
-# RUN 'setup.R' TO CONFIGURE INITIAL SETUP (mostly installing/loading packages)
-source("rsrc/setup.R")
+# install.packages("animation")
+library(animation)
+# install.packages("png")
+library(png)
+# install.packages("patchwork")
+library(patchwork)
+# install.packages("cowplot")
+library(cowplot)
+
 
 # START TIMER
 tictoc::tic(msg = "mapsPrediction_1043SitesModel.R script", log = T)
@@ -36,81 +37,123 @@ options(scipen = 999)
 # load(here::here("data/calibration/globalModel", "calibration_globalModel.Rdata"))
 
 # extract high and low price
-p_high <- 42.03
+p_high <- 41.11
 
 # # clear unnecessary objects
 # rm(matrixTransition.2prices, calibration.globalModel)
 
 # 1043 SITES MODEL CALIBRATION VARIABLES
-load(here::here("data/hmc", "hmc_1043SitesModel.Rdata"))
+load(here::here("data/calibration/hmc/", "calibration_1043_sites.Rdata"))
+
 
 # 1043 SITES AGGREGATE PREDICTION
-aux.prices <- c(7.6, 17.6, 22.6, 27.6, 32.6)
+aux.prices <- c(6.6, 16.6, 21.6, 26.6, 31.6)
 
-# read the site-level predictions with high cattle price to calculate aggregated agricultural output
+
+
+
 prediction.1043SitesModel <- purrr::map_df(
   .x = aux.prices,
-  .f = ~ readr::read_delim(
-    here::here(
-      "data/prediction/1043-det",
-      glue::glue("p_e_{.x}/amazon_data_z.dat")
-    ),
-    col_types = cols(.default = "n")
-  ) %>%
-    dplyr::mutate(p_e = .x, p_a = p_high)
+  .f = ~ {
+    file_path <- here::here("output/optimization/det/gams/1043sites/pa_41.11",
+                            paste0("pe_", .x, "/Z.txt"))
+    
+    # Read the .txt file directly
+    data <- readr::read_delim(file_path, 
+                              delim = ",", 
+                              col_names = FALSE,  # No column names
+                              col_types = cols(.default = "n"))  # All numeric
+    
+    # Add a time column (T/R) ranging from 0 to 201
+    time_period <- 0:(nrow(data) - 1)  # Assuming 202 time steps
+    
+    # Rename the columns to numeric ids (1, 2, ..., 1043)
+    colnames(data) <- as.character(1:ncol(data))
+    
+    # Add the additional variables (T/R, p_e and p_a)
+    data %>%
+      dplyr::mutate(`T/R` = time_period, 
+                    p_e = .x, 
+                    p_a = p_high) %>%
+      dplyr::relocate(`T/R`, .before = 1)  # Place T/R as the first column
+  }
 )
 
-# # read the site-level predictions with low cattle price to calculate aggregated agricultural output
-# prediction.1043SitesModel <- purrr::map_df(.x = aux.prices,
-#                                            .f = ~readr::read_delim(here::here("data/prediction/1043SitesModel",
-#                                                                               glue::glue("pl_p_e_{.x}/amazon_data_z.dat")),
-#                                                                    col_types = cols(.default = "n")) %>%
-#                                              dplyr::mutate(p_e = .x, p_a = p_low)) %>%
-#   bind_rows(prediction.1043SitesModel)
+
+
 
 # AMAZON BIOME VECTOR DATA
-load(here::here("data/raw2clean/amazonBiome_ibge/output/clean_amazonBiome.Rdata"))
+load(here::here("data/clean/amazon_biome.Rdata"))
+
+map_basin <- st_read(
+  dsn = "data/raw/mapbiomas/basin",
+  layer = "BASIN_LEVEL_2_PNRH"
+)
+calib_df <- calib_df %>%
+  st_transform(st_crs(map_basin))
+
+amazon_biome <- amazon_biome %>%
+  st_transform(st_crs(map_basin))
+
+
+
+
+gamma_fit <- read.csv(here::here("data/calibration/hmc", "gamma_fit_1043.csv"))%>%
+  mutate(id = row_number())
+theta_fit <- read.csv(here::here("data/calibration/hmc", "theta_fit_1043.csv"))%>%
+  mutate(id = row_number())
+calib_df <- calib_df %>%
+  left_join(gamma_fit, by = "id")%>%
+  left_join(theta_fit, by="id")
+calib_df <- calib_df %>%
+  mutate(
+    x_1995 = calib_df$gamma_fit * (zbar_1995 - z_1995),
+    x_2008 = calib_df$gamma_fit * (zbar_2008 - z_2008),
+    x_2017 = calib_df$gamma_fit * (zbar_2017 - z_2017)
+  )
+
+
 
 # DATASET CLEANUP AND PREP
 
 # select relevant calibrated variables
-calibration.1043SitesModel <-
-  calibration.1043SitesModel %>%
+calib_df <-
+  calib_df %>%
   dplyr::mutate(
-    rank_theta_1043Sites = dense_rank(desc(theta_1043Sites)), # rank values
-    rank_gamma_1043Sites = dense_rank(desc(gamma_1043Sites))
+    rank_theta_1043Sites = dense_rank(desc(theta_fit)), # rank values
+    rank_gamma_1043Sites = dense_rank(desc(gamma_fit))
   ) %>% # rank values
-  dplyr::select(id, z_2017_1043Sites, theta_1043Sites, rank_theta_1043Sites, rank_gamma_1043Sites, x_2017_1043Sites, zbar_2017_1043Sites)
+  dplyr::select(id, z_2017, theta, rank_theta_1043Sites, rank_gamma_1043Sites, x_2017, zbar_2017)
+
 
 # adjust predicted data to site-year panel + add calibrated variables
 prediction.1043SitesModel <-
   prediction.1043SitesModel %>%
-  tidyr::pivot_longer(cols = -c("T/R ", "p_a", "p_e"), names_to = "id", values_to = "z_t") %>%
+  tidyr::pivot_longer(cols = -c("T/R", "p_a", "p_e"), names_to = "id", values_to = "z_t") %>%
   dplyr::mutate(id = as.numeric(stringr::str_trim(id))) %>%
-  dplyr::rename(time = "T/R ") %>%
+  dplyr::rename(time = "T/R") %>%
   dplyr::mutate(across(.cols = everything(), .fns = as.numeric)) %>%
-  dplyr::right_join(calibration.1043SitesModel, by = c("id" = "id")) %>% # match by id, guarantee that prediction data uses the same id than the calibrated data
+  dplyr::right_join(calib_df, by = c("id" = "id")) %>% # match by id, guarantee that prediction data uses the same id than the calibrated data
   sf::st_as_sf() %>%
   dplyr::mutate(
-    z_t = 100 * 1e11 * z_t / zbar_2017_1043Sites,
-    z_2017_1043Sites = 100 * z_2017_1043Sites / zbar_2017_1043Sites
+    z_t =  1e11 * z_t / zbar_2017,
+    z_2017_1043Sites =  100* z_2017 / zbar_2017
   ) # transform share to %
 
 # clean environment
-rm(calibration.1043SitesModel)
+rm(calib_df)
 
 # adjust projection
 prediction.1043SitesModel <- sf::st_as_sf(prediction.1043SitesModel)
 prediction.1043SitesModel <- sf::st_transform(prediction.1043SitesModel, sf::st_crs(4326))
-clean.amazonBiome <- sf::st_transform(clean.amazonBiome, sf::st_crs(prediction.1043SitesModel))
+amazon_biome <- sf::st_transform(amazon_biome, sf::st_crs(prediction.1043SitesModel))
 
 # GENERATE MAPS
 
 # PLOT z_2017, GAMMA, NAD THETA CALIBRATED VALUES
-
+dir.create(here::here("plots/movie"), recursive = TRUE, showWarnings = FALSE)
 #### movie
 
-#### test
 
 aux.years <- seq(from = 2017, to = 2050, by = 1)
 
@@ -119,20 +162,24 @@ saveGIF(
     for (y in seq_along(aux.years)) {
       plot_b15 <-
         ggplot2::ggplot(data = prediction.1043SitesModel %>%
-          dplyr::filter(time == aux.years[y] - 2017, p_e == 22.6) %>%
-          dplyr::mutate(z_t = cut(round(z_t, 5),
-            breaks = c(0, 0.5, 20, 40, 60, 80, 105),
-            include.lowest = T,
-            dig.lab = 3,
-            labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
-          ))) +
-        ggplot2::geom_sf(aes(fill = z_t)) +
+          dplyr::filter(time == aux.years[y] - 2017, p_e == 21.6) %>%
+          dplyr::mutate(z_t = factor(
+          cut(z_t,
+              breaks = c(0, 0.0001, 20, 40, 60, 80, 105),
+              include.lowest = TRUE,
+              dig.lab = 3,
+              labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
+          ),
+          levels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
+        ))
+        ) +
+        ggplot2::geom_sf(aes(fill = z_t),show.legend = TRUE) +
         ggplot2::scale_fill_manual(
           name = bquote("Year" ~ .(aux.years[y]) ~ "Percent of land allocated to agriculture"),
           values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")),
           drop = FALSE
         ) +
-        ggplot2::geom_sf(data = clean.amazonBiome, fill = NA, color = "darkgreen", size = 1.2) +
+        ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
         ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
         ggplot2::labs(subtitle = bquote("(b) Transfer payment of $15/ton CO2 captured")) +
         ggplot2::theme(
@@ -154,20 +201,24 @@ saveGIF(
 
       plot_b0 <-
         ggplot2::ggplot(data = prediction.1043SitesModel %>%
-          dplyr::filter(time == aux.years[y] - 2017, p_e == 7.6) %>%
-          dplyr::mutate(z_t = cut(round(z_t, 5),
-            breaks = c(0, 0.5, 20, 40, 60, 80, 105),
-            include.lowest = T,
-            dig.lab = 3,
-            labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
-          ))) +
-        ggplot2::geom_sf(aes(fill = z_t)) +
+          dplyr::filter(time == aux.years[y] - 2017, p_e == 6.6) %>%
+          dplyr::mutate(z_t = factor(
+            cut(z_t,
+                breaks = c(0, 0.0001, 20, 40, 60, 80, 105),
+                include.lowest = TRUE,
+                dig.lab = 3,
+                labels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
+            ),
+            levels = c("[0]", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")
+          ))
+          ) +
+        ggplot2::geom_sf(aes(fill = z_t),show.legend = TRUE) +
         ggplot2::scale_fill_manual(
           name = bquote("Year" ~ .(aux.years[y]) ~ "Percent of land allocated to agriculture"),
           values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")),
           drop = FALSE
         ) +
-        ggplot2::geom_sf(data = clean.amazonBiome, fill = NA, color = "darkgreen", size = 1.2) +
+        ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
         ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
         ggplot2::labs(subtitle = bquote("(a) Business as usual")) +
         ggplot2::theme(
@@ -198,7 +249,7 @@ saveGIF(
       print(combined_plot)
     }
   },
-  movie.name = "movie_1043site.gif",
+  movie.name = here::here(glue::glue("plots/movie/movie_1043site.gif")),
   interval = 0.5,
   ani.width = 1650,
   ani.height = 650
