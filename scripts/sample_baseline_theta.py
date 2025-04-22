@@ -125,6 +125,19 @@ def gibbs_sampling_with_data(
     V_posterior_mean = np.mean(V_samples_final, axis=0)
     V_posterior_variance = np.var(V_samples_final, ddof=0, axis=0)
 
+    percentiles = np.percentile(beta_samples_final, [10, 50, 90], axis=0)
+
+    quan_table = pd.DataFrame({
+        "10th_percentile": percentiles[0],
+        "50th_percentile": percentiles[1],
+        "90th_percentile": percentiles[2]
+    })
+
+    # Save to CSV
+    quan_table.to_csv(get_path("output", "tables") /"theta_percentiles.csv", index=False)
+
+
+
     return (
         beta_posterior_mean,
         eta_posterior_mean,

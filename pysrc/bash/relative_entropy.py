@@ -113,4 +113,4 @@ for param, top in top_kl_divergences.items():
         
 print("start plot densities")
 
-density(num_sites=1043,pee=4.5,xi=5.0,solver="gams")
+density(num_sites=num_sites,pee=pee,xi=xi,solver="gams")

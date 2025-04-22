@@ -104,6 +104,19 @@ def gibbs_sampling_with_data(
     V_post_mean = np.mean(V_samples, axis=0)
     V_post_var = np.var(V_samples, ddof=0, axis=0)
 
+
+    percentiles = np.percentile(beta_samples, [10, 50, 90], axis=0)
+
+    quan_table = pd.DataFrame({
+        "10th_percentile": percentiles[0],
+        "50th_percentile": percentiles[1],
+        "90th_percentile": percentiles[2]
+    })
+
+    # Save to CSV
+    quan_table.to_csv(get_path("output", "tables") /"gamma_percentiles.csv", index=False)
+
+
     return (
         beta_post_mean,
         eta_post_mean,

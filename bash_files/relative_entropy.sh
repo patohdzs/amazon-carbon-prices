@@ -1,9 +1,11 @@
 
-xiarray=(5.0)
+# xiarray=(5.0)
+# pee=4.5
+# sites=1043
 
+xiarray=(1.0)
+pee=2.2
 sites=1043
-pee=4.5
-
 
 for xi in "${xiarray[@]}"; do
     
@@ -32,7 +34,7 @@ for xi in "${xiarray[@]}"; do
 #SBATCH --output=./job-outs/$job_name/${action_name}/site_${sites}/pee_${pee}/xi_${xi}/run.out
 #SBATCH --error=./job-outs/$job_name/${action_name}/site_${sites}/pee_${pee}/xi_${xi}/run.err
 #SBATCH --time=1-11:00:00
-#SBATCH --partition=caslake
+#SBATCH --partition=bigmem
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=12G

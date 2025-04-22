@@ -1,7 +1,20 @@
 
-xiarray=(1 5 10000)
+# xiarray=(1 5 10000)
+# idarray=(0 10 15 20 25)
+# peearray=(4.5 6.6)
+
+
+# xiarray=(1)
+# idarray=(0 10 15 20 25)
+# peearray=(2.2)
+
+xiarray=(5)
 idarray=(0 10 15 20 25)
-peearray=(4.5 6.6)
+peearray=(4.5)
+
+# xiarray=(10000)
+# idarray=(0 10 15 20 25)
+# peearray=(2.2 4.5 6.6)
 
 sites=1043
 
