@@ -145,7 +145,7 @@ amazon_biome <- sf::st_transform(amazon_biome, sf::st_crs(prediction.1043SitesMo
 
 
 circle_theta_b0 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(916)) %>%
+  dplyr::filter(id %in% c(986)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -161,7 +161,7 @@ circle_theta_b15 <- prediction.1043SitesModel %>%
   )
 
 circle_gamma_b0 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(817)) %>%
+  dplyr::filter(id %in% c(1015)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -213,10 +213,10 @@ plot_theta_b15 <-
   ggplot2::ggplot(data = prediction.1043SitesModel %>%
                     dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
                     dplyr::mutate(theta_b15 = cut(theta_b15,
-                                            breaks = c(0,0.01, 0.02, 0.06, 0.10,0.14,0.18),
+                                            breaks = c(0,0.01, 0.04, 0.08, 0.12,0.16,0.205),
                                             include.lowest = T,
                                             dig.lab = 3,
-                                            labels = c("[0~ 0.01", " ~ 0.02", " ~ 0.06", " ~ 0.10", " ~ 0.14", " ~ 0.18]")
+                                            labels = c("[0~ 0.01", " ~ 0.04", " ~ 0.08", " ~ 0.12", " ~ 0.16", " ~ 0.20]")
                     ))) +
   ggplot2::geom_sf(aes(fill = theta_b15)) +
   ggplot2::scale_fill_manual(name = NULL, values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
@@ -243,7 +243,7 @@ plot_gamma_b0 <-
   ggplot2::ggplot(data = prediction.1043SitesModel %>%
                     dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
                     dplyr::mutate(gamma_b0 = cut(gamma_b0,
-                                            breaks = c(0, 0.002,0.005, 0.01, 0.02, 0.03, 0.04),
+                                            breaks = c(0, 0.002,0.005, 0.01, 0.02, 0.03, 0.041),
                                             include.lowest = T,
                                             dig.lab = 3,
                                             labels = c("[0~ 0.002", " ~ 0.005", " ~ 0.01", " ~ 0.02", " ~ 0.03", " ~ 0.04]")

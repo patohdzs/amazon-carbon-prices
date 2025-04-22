@@ -16,6 +16,8 @@
 3. python scripts/sample_baseline_gamma.py (or use bash files)
 4. python scripts/sample_baseline_theta.py (or use bash files)
 
+output: output/tables/gamma_percentiles.csv (Table 21)
+	output/tables/theta_percentiles.csv (Table 22)
 
 
 
@@ -70,7 +72,7 @@ output: plots/1043-det/map_z0z30GammaTheta_1043Sites_allPrices_det.png
 
 
 10. python pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee} (or use bash_files/relative_entropy.sh)
-(re is a little different due to randomnesss)
+
 
 
 
@@ -137,10 +139,9 @@ output: plots/1043-hmc_xi5/map_zDecades_1043Sites_pe19.5_hmc.png (Figure 18)
 
 
 
-MPC text, Table 12, B.1, Table 21,22 needs to be fixed
 
+MPC text, Table 12, B.1 needs to be checked
 
-TFFF
 
 
 
