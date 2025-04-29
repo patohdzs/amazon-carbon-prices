@@ -32,7 +32,7 @@ def load_gamma_calib(num_sites: int, type: str = "reg"):
         }
     else:
         # Used for gamma regression
-        df = gpd.read_file(data_dir / f"gamma_reg_{num_sites}.geojson")
+        df = gpd.read_file(data_dir / "gamma_reg.geojson")
 
         # Get design matrix and its dimensions
         M = df["id_group"].unique().size
@@ -56,7 +56,23 @@ def load_gamma_calib(num_sites: int, type: str = "reg"):
 def load_theta_calib(num_sites: int, type: str = "reg"):
     data_dir = get_path("data", "calibration")
     if type == "fit":
-        df = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
+        df = gpd.read_file(data_dir / f"theta_fit_{1043}.geojson")
+
+        # Create the projection matrix
+        G = (
+            df.pivot(index="id", columns="muni_id", values="muni_site_area")
+            .fillna(0)
+            .to_numpy()
+        )
+
+        # Normalize to make row-stochastic
+        G = G / G.sum(axis=1, keepdims=True)
+
+        # Collapse data set to the municipality level
+        df = df.sort_values("muni_id")
+
+        # Keep first observation per municipality
+        df = df.drop_duplicates(subset="muni_id", keep="first")
 
         # Get design matrix
         X = df.iloc[:, 1:8].to_numpy()
@@ -65,20 +81,11 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         # Large group indicator
         m = df["group_id"].astype(int)
 
-        # Municipal level to site level projection matrix
-        G = np.array(
-            [(df["id"].to_numpy() == i).astype(int) for i in range(1, num_sites + 1)]
-        )
-
-        # Multiply by area overalp weights
-        G = df["muni_site_area"].to_numpy() * G
-        G = G / G.sum(axis=1, keepdims=True)
-
         # Cattle price in 2017
         pa_2017 = 44.9736197781184
 
         return {
-            "C_theta": C,
+            "C_theta_fit": C,
             "X_theta_fit": X,
             "m_theta_fit": m,
             "G_theta_fit": G,
@@ -86,7 +93,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         }
 
     else:
-        df = gpd.read_file(data_dir / f"theta_reg_{num_sites}.geojson")
+        df = gpd.read_file(data_dir / "theta_reg.geojson")
         # Get number of groups
         M = df["group_id"].unique().size
 
@@ -97,8 +104,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
 
         # Large group indicator
         m = df["group_id"].astype(int)
-        
-        
+
         W = df["weights"].values
         W = np.diag(W / np.std(W))
 
@@ -141,13 +147,15 @@ print("Finished sampling!")
 print(fit.diagnose())
 
 
-gamma_fit=fit.stan_variable("gamma").mean(axis=0)
-# theta_fit=fit.stan_variable("theta").mean(axis=0)
+gamma_fit_mean = fit.stan_variable("gamma").mean(axis=0)
+theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
 
-
-gamma_mean_df = pd.DataFrame({
-    'gamma_mean': gamma_fit,
-})
+df = pd.DataFrame(
+    {
+        "gamma_fit_mean": gamma_fit_mean,
+        "theta_fit_mean": theta_fit_mean,
+    }
+)
 
 # Save to CSV
-gamma_mean_df.to_csv("gamma_mean.csv", index=False)
+df.to_csv(get_path("data") / "productivity_params.csv", index=False)

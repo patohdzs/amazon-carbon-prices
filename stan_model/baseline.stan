@@ -22,21 +22,17 @@ data {
   array[num_sites] int m_gamma_fit; // group map
 
   // Theta projection
-  int<lower=1> C_theta; // Number of municipality-site combinations
-  matrix[C_theta, K_theta] X_theta_fit; // design matrix
-  array[C_theta] int m_theta_fit; // group map
-  matrix[num_sites, C_theta] G_theta_fit; // municipality projection
+  int<lower=1> C_theta_fit; // Number of municipalities
+  matrix[C_theta_fit, K_theta] X_theta_fit; // design matrix
+  array[C_theta_fit] int m_theta_fit; // group map
+  matrix[num_sites, C_theta_fit] G_theta_fit; // municipality projection
   real pa_2017; // price of cattle in 2017
 }
-
 transformed data {
-  vector[N_theta] y_theta_weighted;
-  matrix[N_theta, K_theta] X_theta_weighted;
-
-  y_theta_weighted = W_theta * y_theta;
-  X_theta_weighted = W_theta * X_theta;
+  // Pre-multiply theta outcome and regressors by weights
+  vector[N_theta] y_theta_w = W_theta * y_theta;
+  matrix[N_theta, K_theta] X_theta_w = W_theta * X_theta;
 }
-
 parameters {
   // Gamma regression parameters
   vector[K_gamma] beta_gamma;
@@ -50,8 +46,11 @@ parameters {
   real<lower=0> sigma_u_theta;
   real<lower=0> sigma_v_theta;
 }
-
 transformed parameters {
+  // Pre-multiply theta FE's by weights
+  vector[N_theta] nu_theta_w = W_theta * nu_theta[m_theta];
+
+  // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma[m_gamma_fit]);
   vector<lower=0>[num_sites] theta = (G_theta_fit
@@ -66,8 +65,6 @@ model {
   nu_gamma ~ normal(0, sigma_v_gamma);
   nu_theta ~ normal(0, sigma_v_theta);
 
-  vector[N_theta] nu_theta_weighted=W_theta*nu_theta[m_theta];
-
   y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma[m_gamma], sigma_u_gamma);
-  y_theta_weighted ~ normal(X_theta_weighted * beta_theta + nu_theta[m_theta], sigma_u_theta);
+  y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
 }
