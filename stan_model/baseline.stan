@@ -14,6 +14,7 @@ data {
   matrix[N_theta, K_theta] X_theta; // design matrix
   vector[N_theta] y_theta; // outcome variable
   array[N_theta] int m_theta; // group map
+  matrix[N_theta, N_theta] W_theta; // weights
 
   // Gamma projection
   int<lower=1> num_sites; // number of samples
@@ -27,26 +28,46 @@ data {
   matrix[num_sites, C_theta] G_theta_fit; // municipality projection
   real pa_2017; // price of cattle in 2017
 }
+
+transformed data {
+  vector[N_theta] y_theta_weighted;
+  matrix[N_theta, K_theta] X_theta_weighted;
+
+  y_theta_weighted = W_theta * y_theta;
+  X_theta_weighted = W_theta * X_theta;
+}
+
 parameters {
   // Gamma regression parameters
   vector[K_gamma] beta_gamma;
   vector[M_gamma] nu_gamma;
-  real<lower=0> sigma_gamma;
+  real<lower=0> sigma_u_gamma;
+  real<lower=0> sigma_v_gamma;
 
   // Theta regression parameters
   vector[K_theta] beta_theta;
   vector[M_theta] nu_theta;
-  real<lower=0> sigma_theta;
+  real<lower=0> sigma_u_theta;
+  real<lower=0> sigma_v_theta;
 }
+
 transformed parameters {
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma[m_gamma_fit]);
-  // vector<lower=0>[num_sites] theta = (G_theta_fit
-  //                                     * exp(X_theta_fit * beta_theta
-  //                                           + nu_theta[m_theta_fit]))
-  //                                    / pa_2017;
+  vector<lower=0>[num_sites] theta = (G_theta_fit
+                                      * exp(X_theta_fit * beta_theta
+                                            + nu_theta[m_theta_fit]))
+                                     / pa_2017;
 }
 model {
-  y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma[m_gamma], sigma_gamma);
-  y_theta ~ normal(X_theta * beta_theta + nu_theta[m_theta], sigma_theta);
+  // Priors
+  beta_gamma ~ normal(0, sigma_u_gamma);
+  beta_theta ~ normal(0, sigma_u_theta);
+  nu_gamma ~ normal(0, sigma_v_gamma);
+  nu_theta ~ normal(0, sigma_v_theta);
+
+  vector[N_theta] nu_theta_weighted=W_theta*nu_theta[m_theta];
+
+  y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma[m_gamma], sigma_u_gamma);
+  y_theta_weighted ~ normal(X_theta_weighted * beta_theta + nu_theta[m_theta], sigma_u_theta);
 }

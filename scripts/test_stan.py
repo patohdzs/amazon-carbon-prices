@@ -1,5 +1,6 @@
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 from cmdstanpy import CmdStanModel
 
 from pysrc.services.file_service import get_path
@@ -96,6 +97,10 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
 
         # Large group indicator
         m = df["group_id"].astype(int)
+        
+        
+        W = df["weights"].values
+        W = np.diag(W / np.std(W))
 
         return {
             "N_theta": N,
@@ -104,6 +109,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
             "y_theta": y,
             "X_theta": X,
             "m_theta": m,
+            "W_theta": W,
         }
 
 
@@ -119,7 +125,7 @@ data = dict(
 
 # Set sampling params
 stan_kwargs = dict(
-    iter_sampling=10000,
+    iter_sampling=5000,
     iter_warmup=500,
     show_progress=True,
     seed=1,
@@ -135,4 +141,13 @@ print("Finished sampling!")
 print(fit.diagnose())
 
 
-fit.stan_variable("gamma").mean(axis=0)
+gamma_fit=fit.stan_variable("gamma").mean(axis=0)
+# theta_fit=fit.stan_variable("theta").mean(axis=0)
+
+
+gamma_mean_df = pd.DataFrame({
+    'gamma_mean': gamma_fit,
+})
+
+# Save to CSV
+gamma_mean_df.to_csv("gamma_mean.csv", index=False)
