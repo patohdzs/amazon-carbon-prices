@@ -14,7 +14,7 @@ data {
   matrix[N_theta, K_theta] X_theta; // design matrix
   vector[N_theta] y_theta; // outcome variable
   array[N_theta] int m_theta; // group map
-  matrix[N_theta, N_theta] W_theta; // weights
+  vector[N_theta] W_theta; // weights
 
   // Gamma projection
   int<lower=1> num_sites; // number of samples
@@ -29,42 +29,51 @@ data {
   real pa_2017; // price of cattle in 2017
 }
 transformed data {
-  // Pre-multiply theta outcome and regressors by weights
-  vector[N_theta] y_theta_w = W_theta * y_theta;
-  matrix[N_theta, K_theta] X_theta_w = W_theta * X_theta;
+  vector[N_theta] y_theta_w = W_theta .* y_theta;
+  matrix[N_theta, K_theta] X_theta_w;
+  for (n in 1:N_theta)
+    X_theta_w[n] = W_theta[n] * X_theta[n];
 }
 parameters {
   // Gamma regression parameters
   vector[K_gamma] beta_gamma;
   vector[M_gamma] nu_gamma;
-  real<lower=0> sigma_u_gamma;
-  real<lower=0> sigma_v_gamma;
+  real log_precision_u_gamma;
+  real log_precision_v_gamma;
 
   // Theta regression parameters
   vector[K_theta] beta_theta;
   vector[M_theta] nu_theta;
-  real<lower=0> sigma_u_theta;
-  real<lower=0> sigma_v_theta;
+  real log_precision_u_theta;
+  real log_precision_v_theta;
 }
 transformed parameters {
   // Pre-multiply theta FE's by weights
-  vector[N_theta] nu_theta_w = W_theta * nu_theta[m_theta];
+  vector[N_theta] nu_theta_w = W_theta .* nu_theta[m_theta];
+  vector[N_gamma] nu_gamma_sort = nu_gamma[m_gamma];
+
+
+  real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
+  real sigma_v_gamma = exp(-0.5*log_precision_v_gamma);
+  real sigma_u_theta = exp(-0.5*log_precision_u_theta);
+  real sigma_v_theta = exp(-0.5*log_precision_v_theta);
+
 
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma[m_gamma_fit]);
-  vector<lower=0>[num_sites] theta = (G_theta_fit
-                                      * exp(X_theta_fit * beta_theta
-                                            + nu_theta[m_theta_fit]))
-                                     / pa_2017;
+  // vector<lower=0>[num_sites] theta = (G_theta_fit
+  //                                     * exp(X_theta_fit * beta_theta
+  //                                           + nu_theta[m_theta_fit]))
+  //                                    / pa_2017;
 }
 model {
   // Priors
-  beta_gamma ~ normal(0, sigma_u_gamma);
-  beta_theta ~ normal(0, sigma_u_theta);
   nu_gamma ~ normal(0, sigma_v_gamma);
   nu_theta ~ normal(0, sigma_v_theta);
 
-  y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma[m_gamma], sigma_u_gamma);
+  y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma_sort, sigma_u_gamma);
   y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
+
+
 }

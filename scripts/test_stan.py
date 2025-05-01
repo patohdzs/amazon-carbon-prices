@@ -106,7 +106,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         m = df["group_id"].astype(int)
 
         W = df["weights"].values
-        W = np.diag(W / np.std(W))
+        W= W/np.std(W)
 
         return {
             "N_theta": N,
@@ -148,14 +148,73 @@ print(fit.diagnose())
 
 
 gamma_fit_mean = fit.stan_variable("gamma").mean(axis=0)
-theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
+# theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
 
 df = pd.DataFrame(
     {
         "gamma_fit_mean": gamma_fit_mean,
-        "theta_fit_mean": theta_fit_mean,
+        # "theta_fit_mean": theta_fit_mean,
     }
 )
 
 # Save to CSV
-df.to_csv(get_path("data") / "productivity_params.csv", index=False)
+df.to_csv(get_path("data","calibration") / "productivity_params.csv", index=False)
+
+
+
+## Test the model
+
+sigma_u_gamma=fit.stan_variable("sigma_u_gamma").mean(axis=0)
+sigma_u_theta=fit.stan_variable("sigma_u_theta").mean(axis=0)
+print("sigma_u_gamma",sigma_u_gamma)
+print("sigma_u_theta",sigma_u_theta)
+sigma_v_gamma=fit.stan_variable("sigma_v_gamma").mean(axis=0)
+sigma_v_theta=fit.stan_variable("sigma_v_theta").mean(axis=0)
+print("sigma_v_gamma",sigma_v_gamma)
+print("sigma_v_theta",sigma_v_theta)
+
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(8, 5))
+plt.hist(fit.stan_variable("sigma_u_gamma"), bins=50)  # 30 bins, nice edges
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title(r'Histogram of $\sigma_u$')
+# plt.grid(True)
+plt.tight_layout()
+plt.savefig("test/histogram_sigma_u_gamma.png", dpi=300)
+plt.show()
+
+
+plt.figure(figsize=(8, 5))
+plt.hist(fit.stan_variable("sigma_v_gamma"), bins=50)  # 30 bins, nice edges
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title(r'Histogram of $\sigma_nu$')
+# plt.grid(True)
+plt.tight_layout()
+plt.savefig("test/histogram_sigma_nu_gamma.png", dpi=300)
+plt.show()
+
+
+
+plt.figure(figsize=(8, 5))
+plt.hist(1/fit.stan_variable("sigma_u_gamma")**2, bins=50)  # 30 bins, nice edges
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title(r'Histogram of $\eta$')
+# plt.grid(True)
+plt.tight_layout()
+plt.savefig("test/histogram_eta_gamma.png", dpi=300)
+plt.show()
+
+
+plt.figure(figsize=(8, 5))
+plt.hist(1/fit.stan_variable("sigma_v_gamma")**2, bins=50)  # 30 bins, nice edges
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title(r'Histogram of $\zeta$')
+# plt.grid(True)
+plt.tight_layout()
+plt.savefig("test/histogram_zeta_gamma.png", dpi=300)
+plt.show()
