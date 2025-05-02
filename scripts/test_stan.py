@@ -20,7 +20,7 @@ def load_gamma_calib(num_sites: int, type: str = "reg"):
         df = gpd.read_file(data_dir / f"gamma_fit_{num_sites}.geojson")
 
         # Get design matrix and its dimensions
-        X = df.iloc[:, 1:6].to_numpy()
+        X = df.iloc[:, :6].to_numpy()
         N, K = X.shape
 
         # Large group indicator
@@ -37,7 +37,7 @@ def load_gamma_calib(num_sites: int, type: str = "reg"):
         # Get design matrix and its dimensions
         M = df["id_group"].unique().size
         y = df["log_co2e_ha_2017"]
-        X = df.iloc[:, 1:6].to_numpy()
+        X = df.iloc[:, :6].to_numpy()
         N, K = X.shape
 
         # Large group indicator
@@ -75,7 +75,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         df = df.drop_duplicates(subset="muni_id", keep="first")
 
         # Get design matrix
-        X = df.iloc[:, 1:8].to_numpy()
+        X = df.iloc[:, :8].to_numpy()
         C, _ = X.shape
 
         # Large group indicator
@@ -83,7 +83,9 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
 
         # Cattle price in 2017
         pa_2017 = 44.9736197781184
-
+        
+        
+        
         return {
             "C_theta_fit": C,
             "X_theta_fit": X,
@@ -99,14 +101,14 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
 
         # Get design matrix and its dimensions
         y = df["log_slaughter"]
-        X = df.iloc[:, 1:8].to_numpy()
+        X = df.iloc[:, :8].to_numpy()
         N, K = X.shape
 
         # Large group indicator
         m = df["group_id"].astype(int)
 
         W = df["weights"].values
-        W= W/np.std(W)
+        W= np.sqrt(W/np.std(W))
 
         return {
             "N_theta": N,
@@ -147,13 +149,15 @@ print("Finished sampling!")
 print(fit.diagnose())
 
 
+
+
 gamma_fit_mean = fit.stan_variable("gamma").mean(axis=0)
-# theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
+theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
 
 df = pd.DataFrame(
     {
         "gamma_fit_mean": gamma_fit_mean,
-        # "theta_fit_mean": theta_fit_mean,
+        "theta_fit_mean": theta_fit_mean,
     }
 )
 

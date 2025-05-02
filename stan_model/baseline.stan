@@ -50,7 +50,9 @@ parameters {
 transformed parameters {
   // Pre-multiply theta FE's by weights
   vector[N_theta] nu_theta_w = W_theta .* nu_theta[m_theta];
+  vector[C_theta_fit] nu_theta_fit = nu_theta[m_theta_fit];
   vector[N_gamma] nu_gamma_sort = nu_gamma[m_gamma];
+  vector[num_sites] nu_gamma_fit = nu_gamma[m_gamma_fit];
 
 
   real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
@@ -61,11 +63,12 @@ transformed parameters {
 
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
-                                         + nu_gamma[m_gamma_fit]);
-  // vector<lower=0>[num_sites] theta = (G_theta_fit
-  //                                     * exp(X_theta_fit * beta_theta
-  //                                           + nu_theta[m_theta_fit]))
-  //                                    / pa_2017;
+                                         + nu_gamma_fit);
+  vector<lower=0>[num_sites] theta = (G_theta_fit
+                                      * exp(X_theta_fit * beta_theta
+                                            + nu_theta_fit))
+                                     / pa_2017;
+
 }
 model {
   // Priors
