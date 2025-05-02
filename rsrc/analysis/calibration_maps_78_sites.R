@@ -11,6 +11,12 @@
 
 # SETUP
 
+library(sf)           
+library(dplyr)          
+library(ggplot2)         
+library(RColorBrewer)    
+library(tictoc)          
+library(here)           
 
 
 # START TIMER
@@ -30,13 +36,12 @@ load(here::here("data/calibration/", "calibration_78_sites.Rdata"))
 # AMAZON BIOME VECTOR DATA
 load(here::here("data/clean/amazon_biome.Rdata"))
 
-gamma_fit <- read.csv(here::here("data/calibration/hmc", "gamma_fit_78.csv"))%>%
+productivity_params <- read.csv(here::here("data/calibration/", "productivity_params_78.csv"))%>%
   mutate(id = row_number())
-theta_fit <- read.csv(here::here("data/calibration/hmc", "theta_fit_78.csv"))%>%
-  mutate(id = row_number())
+
 calib_df <- calib_df %>%
-  left_join(gamma_fit, by = "id")%>%
-  left_join(theta_fit, by="id")
+  left_join(productivity_params, by = "id")
+
 calib_df <- calib_df %>%
   mutate(
     x_1995 = calib_df$gamma_fit * (zbar_1995 - z_1995),
