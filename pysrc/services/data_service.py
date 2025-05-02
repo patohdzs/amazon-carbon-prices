@@ -7,7 +7,7 @@ from ..services.file_service import get_path
 
 def load_site_data(num_sites: int, year: int = 2017, norm_fac: float = 1e9):
     # Set data directory
-    data_dir = get_path("data", "calibration", "hmc")
+    data_dir = get_path("data", "calibration")
 
     # Read data file
     file_path = data_dir / f"calibration_{num_sites}_sites.csv"
@@ -28,10 +28,12 @@ def load_site_data(num_sites: int, year: int = 2017, norm_fac: float = 1e9):
 
 
 def load_productivity_params(num_sites: int):
-    data_dir = get_path("data", "calibration", "hmc")
-    theta = pd.read_csv(data_dir / f"theta_fit_{num_sites}.csv")
+    data_dir = get_path("data", "calibration")
+    productivity_parameters = pd.read_csv(data_dir / f"productivity_params_{num_sites}.csv")
+    
+    theta = productivity_parameters["theta_fit"]
 
-    gamma = pd.read_csv(data_dir / f"gamma_fit_{num_sites}.csv")
+    gamma = productivity_parameters["gamma_fit"]
 
     return (theta.to_numpy()[:,].flatten(), gamma.to_numpy()[:,].flatten())
 

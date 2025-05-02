@@ -56,7 +56,7 @@ def load_gamma_calib(num_sites: int, type: str = "reg"):
 def load_theta_calib(num_sites: int, type: str = "reg"):
     data_dir = get_path("data", "calibration")
     if type == "fit":
-        df = gpd.read_file(data_dir / f"theta_fit_{1043}.geojson")
+        df = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
 
         # Create the projection matrix
         G = (
@@ -156,26 +156,53 @@ theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
 
 df = pd.DataFrame(
     {
-        "gamma_fit_mean": gamma_fit_mean,
-        "theta_fit_mean": theta_fit_mean,
+        "gamma_fit": gamma_fit_mean,
+        "theta_fit": theta_fit_mean,
     }
 )
 
 # Save to CSV
-df.to_csv(get_path("data","calibration") / "productivity_params.csv", index=False)
+df.to_csv(get_path("data","calibration") / f"productivity_params_{num_sites}.csv", index=False)
 
 
 
 ## Test the model
 
-sigma_u_gamma=fit.stan_variable("sigma_u_gamma").mean(axis=0)
-sigma_u_theta=fit.stan_variable("sigma_u_theta").mean(axis=0)
-print("sigma_u_gamma",sigma_u_gamma)
-print("sigma_u_theta",sigma_u_theta)
-sigma_v_gamma=fit.stan_variable("sigma_v_gamma").mean(axis=0)
-sigma_v_theta=fit.stan_variable("sigma_v_theta").mean(axis=0)
-print("sigma_v_gamma",sigma_v_gamma)
-print("sigma_v_theta",sigma_v_theta)
+beta_gamma = fit.stan_variable("beta_gamma")
+beta_theta = fit.stan_variable("beta_theta")
+nu_gamma = fit.stan_variable("nu_gamma")
+nu_theta = fit.stan_variable("nu_theta")
+
+sigma_u_gamma=fit.stan_variable("sigma_u_gamma")
+sigma_u_theta=fit.stan_variable("sigma_u_theta")
+sigma_v_gamma=fit.stan_variable("sigma_v_gamma")
+sigma_v_theta=fit.stan_variable("sigma_v_theta")
+
+
+df_beta_gamma = pd.DataFrame(beta_gamma, columns=[f"beta_gamma_{i}" for i in range(beta_gamma.shape[1])])
+df_beta_theta = pd.DataFrame(beta_theta, columns=[f"beta_theta_{i}" for i in range(beta_theta.shape[1])])
+df_nu_gamma = pd.DataFrame(nu_gamma, columns=[f"nu_gamma_{i}" for i in range(nu_gamma.shape[1])])
+df_nu_theta = pd.DataFrame(nu_theta, columns=[f"nu_theta_{i}" for i in range(nu_theta.shape[1])])
+df_sigma_u_gamma = pd.DataFrame({'sigma_u_gamma': sigma_u_gamma})
+df_sigma_u_theta = pd.DataFrame({'sigma_u_theta': sigma_u_theta})
+df_sigma_v_gamma = pd.DataFrame({'sigma_v_gamma': sigma_v_gamma})
+df_sigma_v_theta = pd.DataFrame({'sigma_v_theta': sigma_v_theta})
+
+df_all = pd.concat([
+    df_beta_gamma,
+    df_beta_theta,
+    df_nu_gamma,
+    df_nu_theta,
+    df_sigma_u_gamma,
+    df_sigma_u_theta,
+    df_sigma_v_gamma,
+    df_sigma_v_theta
+], axis=1)
+
+df_all.to_csv(get_path("data", "calibration") / f"distribution_parameters_all_{num_sites}.csv", index=False)
+
+
+
 
 
 import matplotlib.pyplot as plt
@@ -186,7 +213,7 @@ plt.ylabel('Frequency')
 plt.title(r'Histogram of $\sigma_u$')
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig("test/histogram_sigma_u_gamma.png", dpi=300)
+plt.savefig(f"test/{num_sites}/histogram_sigma_u_gamma.png", dpi=300)
 plt.show()
 
 
@@ -197,7 +224,7 @@ plt.ylabel('Frequency')
 plt.title(r'Histogram of $\sigma_nu$')
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig("test/histogram_sigma_nu_gamma.png", dpi=300)
+plt.savefig(f"test/{num_sites}/histogram_sigma_nu_gamma.png", dpi=300)
 plt.show()
 
 
@@ -209,7 +236,7 @@ plt.ylabel('Frequency')
 plt.title(r'Histogram of $\eta$')
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig("test/histogram_eta_gamma.png", dpi=300)
+plt.savefig(f"test/{num_sites}/histogram_eta_gamma.png", dpi=300)
 plt.show()
 
 
@@ -220,5 +247,5 @@ plt.ylabel('Frequency')
 plt.title(r'Histogram of $\zeta$')
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig("test/histogram_zeta_gamma.png", dpi=300)
+plt.savefig(f"test/{num_sites}/histogram_zeta_gamma.png", dpi=300)
 plt.show()
