@@ -177,7 +177,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
 
     return min_result, min_pe
 
-
 ## det 1043 sites
 # min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
 # print("min_result",min_result,"min_pe",det_1043_pe)
@@ -185,13 +184,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
-# hmc 78 sites
-# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=10)
-# print("min_result", min_result, "min_pe", hmc_78_pe)
-
 min_result, hmc_1043_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=xi,solver='gams',pe_low=seed_i, pe_high=(seed_i+0.01))
 print("min_result", min_result, "min_pe", hmc_1043_pe)
 
-# ## mpc 78 sites
-# min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc')
-# print("min_result",min_result,"min_pe",mpc_78_pe)

@@ -4,11 +4,13 @@ import numpy as np
 from cmdstanpy import CmdStanModel
 
 from ..optimization import solve_planner_problem, vectorize_trajectories
-from ..sampling import baseline_hyperparams, gamma_adj_reg_data, theta_adj_reg_data
+# from ..sampling import baseline_hyperparams, gamma_adj_reg_data, theta_adj_reg_data
 from ..services.data_service import (
     load_productivity_params,
-    load_reg_data,
+    # load_reg_data,
     load_site_data,
+    load_gamma_calib,
+    load_theta_calib,
 )
 from ..services.file_service import get_path
 import pickle
@@ -33,7 +35,7 @@ def sample(
     # Sampling params
     max_iter=20000,
     tol=0.005,
-    final_sample_size=5_000,
+    final_sample_size=2_000,
     **stan_kwargs,
 ):
     # Instantiate stan sampler
@@ -65,7 +67,7 @@ def sample(
     (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
 
     # Load parameter regression data
-    (site_theta_df, site_gamma_df) = load_reg_data(num_sites)
+    # (site_theta_df, site_gamma_df) = load_reg_data(num_sites)
 
     # Set initial theta & gamma using baseline mean
     (theta_vals, gamma_vals) = load_productivity_params(num_sites)
@@ -157,16 +159,26 @@ def sample(
             xi=xi,
             kappa=kappa,
             pa=pa,
-            pa_2017=pa_2017,
+            # pa_2017=pa_2017,
             pe=pe,
+            num_sites=num_sites,
             **vectorize_trajectories(planner_solution),
             **_dynamics_matrices(T, alpha, delta),
-            **theta_adj_reg_data(num_sites, site_theta_df),
-            **gamma_adj_reg_data(num_sites, site_gamma_df),
-            **baseline_hyperparams("gamma"),
-            **baseline_hyperparams("theta"),
+            **load_gamma_calib(num_sites, "reg"),
+            **load_gamma_calib(num_sites, "fit"),
+            **load_theta_calib(num_sites, "reg"),
+            **load_theta_calib(num_sites, "fit"),
         )
 
+        stan_kwargs = dict(
+            iter_sampling=1500,
+            iter_warmup=500,
+            show_progress=True,
+            seed=1,
+            inits=0.2,
+            chains=8,
+        )
+        
         # Sampling from adjusted distribution
         sampling_time = time.time()
         fit = sampler.sample(
@@ -186,13 +198,19 @@ def sample(
         gamma_adj_samples = fit.stan_variable("gamma")
         theta_coe_adj_samples = fit.stan_variable("beta_theta")
         gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
+        theta_nu_adj_samples = fit.stan_variable("nu_theta")
+        gamma_nu_adj_samples = fit.stan_variable("nu_gamma")
+        theta_sigma_u_adj_samples = fit.stan_variable("sigma_u_theta")[:, None]
+        gamma_sigma_u_adj_samples = fit.stan_variable("sigma_u_gamma")[:, None]
+        theta_sigma_v_adj_samples = fit.stan_variable("sigma_v_theta")[:, None]
+        gamma_sigma_v_adj_samples = fit.stan_variable("sigma_v_gamma")[:, None]
 
         uncertainty_adj_samples = np.concatenate(
             (theta_adj_samples, gamma_adj_samples), axis=1
         )
 
         uncertainty_coe_adj_samples = np.concatenate(
-            (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
+            (theta_coe_adj_samples, gamma_coe_adj_samples,theta_nu_adj_samples,gamma_nu_adj_samples,theta_sigma_u_adj_samples,gamma_sigma_u_adj_samples,theta_sigma_v_adj_samples,gamma_sigma_v_adj_samples), axis=1
         )
 
         # Update ensemble/tracker
