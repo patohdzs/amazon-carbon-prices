@@ -2,7 +2,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from cmdstanpy import CmdStanModel
-
+from scipy.sparse import coo_matrix
 from pysrc.services.file_service import get_path
 
 # Compile Stan code
@@ -85,12 +85,21 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         pa_2017 = 44.9736197781184
         
         
+        G_sparse = coo_matrix(G)
+        row_G_theta = G_sparse.row + 1  # Stan uses 1-based indexing
+        col_G_theta = G_sparse.col + 1
+        val_G_theta = G_sparse.data
+        N_nonzero_G_theta = len(val_G_theta)
         
         return {
             "C_theta_fit": C,
             "X_theta_fit": X,
             "m_theta_fit": m,
-            "G_theta_fit": G,
+            # "G_theta_fit": G,
+            "N_nonzero_G_theta": N_nonzero_G_theta,
+            "row_G_theta": row_G_theta,
+            "col_G_theta": col_G_theta,
+            "val_G_theta": val_G_theta,
             "pa_2017": pa_2017,
         }
 
@@ -133,11 +142,12 @@ data = dict(
 
 # Set sampling params
 stan_kwargs = dict(
-    iter_sampling=5000,
+    iter_sampling=1500,
     iter_warmup=500,
     show_progress=True,
-    seed=1,
+    seed=1, 
     inits=0.2,
+    chains=8,
 )
 
 # Sampling from adjusted distribution

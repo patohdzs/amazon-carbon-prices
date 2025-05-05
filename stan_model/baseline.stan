@@ -25,7 +25,16 @@ data {
   int<lower=1> C_theta_fit; // Number of municipalities
   matrix[C_theta_fit, K_theta] X_theta_fit; // design matrix
   array[C_theta_fit] int m_theta_fit; // group map
-  matrix[num_sites, C_theta_fit] G_theta_fit; // municipality projection
+  // matrix[num_sites, C_theta_fit] G_theta_fit; // municipality projection
+
+  int<lower=1> N_nonzero_G_theta;        // number of nonzero entries
+  array[N_nonzero_G_theta] int row_G_theta;  // row indices (site)
+  array[N_nonzero_G_theta] int col_G_theta;  // column indices (municipality)
+  vector[N_nonzero_G_theta] val_G_theta;     // nonzero values (weights)
+
+
+
+
   real pa_2017; // price of cattle in 2017
 }
 transformed data {
@@ -64,10 +73,19 @@ transformed parameters {
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma_fit);
-  vector<lower=0>[num_sites] theta = (G_theta_fit
-                                      * exp(X_theta_fit * beta_theta
-                                            + nu_theta_fit))
-                                     / pa_2017;
+  // vector<lower=0>[num_sites] theta = (G_theta_fit
+  //                                     * exp(X_theta_fit * beta_theta
+  //                                           + nu_theta_fit))
+  //                                    / pa_2017;
+
+
+  vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta + nu_theta_fit);
+  vector<lower=0>[num_sites] theta= rep_vector(0, num_sites); 
+
+  for (n in 1:N_nonzero_G_theta) {
+    theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]/ pa_2017;
+  }
+
 
 }
 model {
