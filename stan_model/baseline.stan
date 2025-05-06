@@ -69,7 +69,7 @@ transformed parameters {
 
   vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta
                                           + nu_theta_fit);
-  vector<lower=0>[num_sites] theta;
+  vector<lower=0>[num_sites] theta= rep_vector(0, num_sites);
 
   for (n in 1 : N_nonzero_G_theta) {
     theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]

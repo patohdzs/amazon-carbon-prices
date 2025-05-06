@@ -96,7 +96,6 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
             "C_theta_fit": C,
             "X_theta_fit": X,
             "m_theta_fit": m,
-            # "G_theta_fit": G,
             "N_nonzero_G_theta": N_nonzero_G_theta,
             "row_G_theta": row_G_theta,
             "col_G_theta": col_G_theta,
@@ -148,7 +147,7 @@ stan_kwargs = dict(
     show_progress=True,
     seed=1,
     inits=0.2,
-    chains=8,
+    chains=4,
 )
 
 # Sampling from adjusted distribution
