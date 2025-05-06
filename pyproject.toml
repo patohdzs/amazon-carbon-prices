@@ -6,24 +6,23 @@ build-backend = "setuptools.build_meta"
 packages = ["pysrc", "pysrc.services", "pysrc.optimization", "pysrc.sampling"]
 
 [project]
-name = "project-amazon"
+name = "amazon-carbon-prices"
 version = "0.2.1"
 requires-python = ">=3.9,<3.12"
 dependencies = [
     "numpy == 1.25.2",
     "pandas == 2.1.0",
-    "geopandas == 0.14.0",
+    "geopandas == 0.14.4",
     "pyomo == 6.6.2",
     "cmdstanpy == 1.2.0",
     "scipy == 1.11.1",
     "matplotlib == 3.7.3",
-    "gamsapi == 45.1.0",
 ]
 
 [project.optional-dependencies]
 notebooks = ["ipykernel"]
 dev = ["black", "ruff", "pre-commit"]
-all = ["project-amazon[notebooks, dev]"]
+all = ["amazon-carbon-prices[notebooks, dev]"]
 
 [tool.ruff]
 select = [
