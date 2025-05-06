@@ -25,22 +25,17 @@ data {
   int<lower=1> C_theta_fit; // Number of municipalities
   matrix[C_theta_fit, K_theta] X_theta_fit; // design matrix
   array[C_theta_fit] int m_theta_fit; // group map
-  // matrix[num_sites, C_theta_fit] G_theta_fit; // municipality projection
 
-  int<lower=1> N_nonzero_G_theta;        // number of nonzero entries
-  array[N_nonzero_G_theta] int row_G_theta;  // row indices (site)
-  array[N_nonzero_G_theta] int col_G_theta;  // column indices (municipality)
-  vector[N_nonzero_G_theta] val_G_theta;     // nonzero values (weights)
-
-
-
-
+  int<lower=1> N_nonzero_G_theta; // number of nonzero entries
+  array[N_nonzero_G_theta] int row_G_theta; // row indices (site)
+  array[N_nonzero_G_theta] int col_G_theta; // column indices (municipality)
+  vector[N_nonzero_G_theta] val_G_theta; // nonzero values (weights)
   real pa_2017; // price of cattle in 2017
 }
 transformed data {
   vector[N_theta] y_theta_w = W_theta .* y_theta;
   matrix[N_theta, K_theta] X_theta_w;
-  for (n in 1:N_theta)
+  for (n in 1 : N_theta)
     X_theta_w[n] = W_theta[n] * X_theta[n];
 }
 parameters {
@@ -63,30 +58,23 @@ transformed parameters {
   vector[N_gamma] nu_gamma_sort = nu_gamma[m_gamma];
   vector[num_sites] nu_gamma_fit = nu_gamma[m_gamma_fit];
 
-
-  real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
-  real sigma_v_gamma = exp(-0.5*log_precision_v_gamma);
-  real sigma_u_theta = exp(-0.5*log_precision_u_theta);
-  real sigma_v_theta = exp(-0.5*log_precision_v_theta);
-
+  real sigma_u_gamma = exp(-0.5 * log_precision_u_gamma);
+  real sigma_v_gamma = exp(-0.5 * log_precision_v_gamma);
+  real sigma_u_theta = exp(-0.5 * log_precision_u_theta);
+  real sigma_v_theta = exp(-0.5 * log_precision_v_theta);
 
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma_fit);
-  // vector<lower=0>[num_sites] theta = (G_theta_fit
-  //                                     * exp(X_theta_fit * beta_theta
-  //                                           + nu_theta_fit))
-  //                                    / pa_2017;
 
+  vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta
+                                          + nu_theta_fit);
+  vector<lower=0>[num_sites] theta;
 
-  vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta + nu_theta_fit);
-  vector<lower=0>[num_sites] theta= rep_vector(0, num_sites); 
-
-  for (n in 1:N_nonzero_G_theta) {
-    theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]/ pa_2017;
+  for (n in 1 : N_nonzero_G_theta) {
+    theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]
+                             / pa_2017;
   }
-
-
 }
 model {
   // Priors
@@ -95,6 +83,4 @@ model {
 
   y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma_sort, sigma_u_gamma);
   y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
-
-
 }
