@@ -1,51 +1,27 @@
 functions {
-  real log_value(vector gamma, vector theta, int T, int S, real alpha,
-                 matrix Z, matrix U, matrix V, vector zbar_2017,
+  real log_value(vector gamma, vector theta, int T, int S, 
+                 matrix Z,
                  vector forest_area_2017, vector alpha_p_Adym, matrix Bdym,
-                 vector ds_vect, real zeta_u, real zeta_v, real xi,
-                 real kappa, real pa, real pe) {
-    // Carbon captured at time zero
-    real x0 = (gamma' * forest_area_2017);
-
-    // Compute forest area in each time period
-    matrix[S, T] forest_area;
-    for (t in 1 : T) {
-      forest_area[ : , t] = zbar_2017 - Z[1 : S, t];
-    }
-
-    // Aggregate carbon captured
-    vector[T] X_zero = x0 * rep_vector(1.0, T);
+                 vector ds_vect,  real xi,
+                  real pa, real pe, matrix carbon_stock) {
 
     // Compute stock of carbon (X)
-    row_vector[T] omega = gamma' * ((alpha * forest_area) - U);
+    row_vector[T] omega = gamma' * carbon_stock;
     vector[T + 1] X;
-    X[1] = x0;
-    X[2 : (T + 1)] = alpha_p_Adym .* X_zero + Bdym * omega';
+    X[1] = gamma' * forest_area_2017;
+    X[2 : (T + 1)] = alpha_p_Adym * X[1] + Bdym * omega';
 
     // Compute aggregate X dot
     vector[T] Xdot_agg = (X[2 : (T + 1)] - X[1 : T]);
-
-    // Compute aggregate Z
-    vector[T] Z_agg = (rep_row_vector(1.0, S) * Z[ : , 2 : T + 1])';
-
-    // Value of emissions absorbed
-    real term_1 = -pe * sum(ds_vect .* (kappa * Z_agg - Xdot_agg));
+    real term_1 = -pe * sum(ds_vect .* ( - Xdot_agg));
 
     // Value of agricultural output
     vector[T + 1] agri_output = pa * (theta' * Z)';
     real term_2 = sum(ds_vect .* agri_output[2 : T + 1]);
 
-    // Value of adjustment costs
-    vector[T] U_agg = (rep_row_vector(1.0, S) * U)';
-    vector[T] V_agg = (rep_row_vector(1.0, S) * V)';
-
-    vector[T] w = zeta_u / 2.0 * (U_agg .* U_agg)
-                  + zeta_v / 2.0 * (V_agg .* V_agg);
-
-    real term_3 = -sum(ds_vect .* w);
 
     // Overall objective value
-    real obj_val = term_1 + term_2 + term_3;
+    real obj_val = term_1 + term_2 ;
     real log_density_val = -1.0 / xi * obj_val;
 
     return log_density_val;
@@ -63,6 +39,7 @@ data {
   vector[T] alpha_p_Adym;
   matrix[T, T] Bdym;
   vector[T] ds_vect; // Time discounting vector
+  matrix[S,T] carbon_stock;
   real<lower=0> alpha; // Mean-reversion coefficient
   real zeta_u; // Penalty on adjustment costs
   real zeta_v; // Penalty on adjustment costs
@@ -116,28 +93,32 @@ transformed data {
 parameters {
   // Gamma regression parameters
   vector[K_gamma] beta_gamma;
-  vector[M_gamma] nu_gamma;
+  vector[M_gamma] nu_gamma_transform;
   real log_precision_u_gamma;
   real log_precision_v_gamma;
 
   // Theta regression parameters
   vector[K_theta] beta_theta;
-  vector[M_theta] nu_theta;
+  vector[M_theta] nu_theta_transform;
   real log_precision_u_theta;
   real log_precision_v_theta;
 }
 transformed parameters {
+  real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
+  real sigma_v_gamma = exp(-0.5*log_precision_v_gamma);
+  real sigma_u_theta = exp(-0.5*log_precision_u_theta);
+  real sigma_v_theta = exp(-0.5*log_precision_v_theta);
+
+
+  vector[M_gamma] nu_gamma = sigma_v_gamma * nu_gamma_transform;
+  vector[M_theta] nu_theta = sigma_v_theta * nu_theta_transform;
+  
   // Pre-multiply theta FE's by weights
   vector[N_theta] nu_theta_w = W_theta .* nu_theta[m_theta];
   vector[C_theta_fit] nu_theta_fit = nu_theta[m_theta_fit];
   vector[N_gamma] nu_gamma_sort = nu_gamma[m_gamma];
   vector[num_sites] nu_gamma_fit = nu_gamma[m_gamma_fit];
 
-
-  real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
-  real sigma_v_gamma = exp(-0.5*log_precision_v_gamma);
-  real sigma_u_theta = exp(-0.5*log_precision_u_theta);
-  real sigma_v_theta = exp(-0.5*log_precision_v_theta);
 
 
   // Projection
@@ -160,14 +141,14 @@ transformed parameters {
 }
 model {
 
-  nu_gamma ~ normal(0, sigma_v_gamma);
-  nu_theta ~ normal(0, sigma_v_theta);
+  nu_gamma_transform ~ normal(0, 1);
+  nu_theta_transform ~ normal(0, 1);
 
   y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma_sort, sigma_u_gamma);
   y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
 
-  // Value function
-  target += log_value(gamma, theta, T, S, alpha, Z, U, V, zbar_2017,
-                      forest_area_2017, alpha_p_Adym, Bdym, ds_vect, zeta_u,
-                      zeta_v, xi, kappa, pa, pe);
+  target += log_value(gamma, theta, T, S, Z,  
+                      forest_area_2017, alpha_p_Adym, Bdym, ds_vect, xi,  pa, pe,carbon_stock);
+
+
 }

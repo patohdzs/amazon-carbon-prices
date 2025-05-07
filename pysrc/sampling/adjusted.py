@@ -1,4 +1,5 @@
 import time
+import pandas as pd
 
 import numpy as np
 from cmdstanpy import CmdStanModel
@@ -29,6 +30,7 @@ def sample(
     kappa=2.094215255,
     zeta_u=1.66e-4 * 1e9,
     zeta_v=1.00e-4 * 1e9,
+    norm_fac=1e9,
     pa_2017=44.9736197781184,
     # Optimizer
     solver="gurobi",
@@ -44,7 +46,7 @@ def sample(
     #     cpp_options={"STAN_THREADS": "true"},
     #     force_compile=True,
     # )
-    
+    # print("test, norm_fac", norm_fac)
     pickle_file = 'stan_model/compiled_model.pkl'
 
     if os.path.exists(pickle_file):
@@ -64,7 +66,10 @@ def sample(
 
 
     # Load site data
-    (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites)
+    (zbar_2017, z_2017, forest_area_2017) = load_site_data(num_sites,norm_fac=norm_fac)
+    # print("zbar_2017", zbar_2017)
+    # print("z_2017", z_2017)
+    # print("forest_area_2017", forest_area_2017)
 
     # Load parameter regression data
     # (site_theta_df, site_gamma_df) = load_reg_data(num_sites)
@@ -164,21 +169,14 @@ def sample(
             num_sites=num_sites,
             **vectorize_trajectories(planner_solution),
             **_dynamics_matrices(T, alpha, delta),
+            **_precompute_decision(planner_solution, zbar_2017, alpha),
             **load_gamma_calib(num_sites, "reg"),
             **load_gamma_calib(num_sites, "fit"),
             **load_theta_calib(num_sites, "reg"),
             **load_theta_calib(num_sites, "fit"),
         )
 
-        stan_kwargs = dict(
-            iter_sampling=1500,
-            iter_warmup=500,
-            show_progress=True,
-            seed=1,
-            inits=0.2,
-            chains=8,
-        )
-        
+
         # Sampling from adjusted distribution
         sampling_time = time.time()
         fit = sampler.sample(
@@ -283,14 +281,16 @@ def sample(
     gamma_adj_samples = fit.stan_variable("gamma")
     theta_coe_adj_samples = fit.stan_variable("beta_theta")
     gamma_coe_adj_samples = fit.stan_variable("beta_gamma")
-    # eta_samples = fit.stan_variable("eta")
-    # nu_samples = fit.stan_variable("nu")
-    V_gamma_samples = fit.stan_variable("Vj_gamma")
-    V_theta_samples = fit.stan_variable("Vj_theta")
+    theta_nu_adj_samples = fit.stan_variable("nu_theta")
+    gamma_nu_adj_samples = fit.stan_variable("nu_gamma")
+    theta_sigma_u_adj_samples = fit.stan_variable("sigma_u_theta")[:, None]
+    gamma_sigma_u_adj_samples = fit.stan_variable("sigma_u_gamma")[:, None]
+    theta_sigma_v_adj_samples = fit.stan_variable("sigma_v_theta")[:, None]
+    gamma_sigma_v_adj_samples = fit.stan_variable("sigma_v_gamma")[:, None]
 
     final_samples = np.concatenate((theta_adj_samples, gamma_adj_samples), axis=1)
     final_samples_coe = np.concatenate(
-        (theta_coe_adj_samples, gamma_coe_adj_samples), axis=1
+        (theta_coe_adj_samples, gamma_coe_adj_samples,theta_nu_adj_samples,gamma_nu_adj_samples,theta_sigma_u_adj_samples,gamma_sigma_u_adj_samples,theta_sigma_v_adj_samples,gamma_sigma_v_adj_samples), axis=1
     )
 
     results.update({"final_sample": final_samples})
@@ -298,8 +298,8 @@ def sample(
 
     # results.update({"eta_sample": eta_samples})
     # results.update({"nu_sample": nu_samples})
-    results.update({"V_gamma_sample": V_gamma_samples})
-    results.update({"V_theta_sample": V_theta_samples})
+    # results.update({"V_gamma_sample": V_gamma_samples})
+    # results.update({"V_theta_sample": V_theta_samples})
 
     return results
 
@@ -319,3 +319,12 @@ def _dynamics_matrices(T, alpha, delta, dt=1):
     ds_vect = np.exp(-delta * np.arange(T) * dt)
     ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
     return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}
+
+
+def _precompute_decision(PlannerSolution,zbar,alpha):
+    Z = PlannerSolution.Z.T
+    U = PlannerSolution.U[:-1, :].T
+    forest_area = zbar.reshape(-1, 1) - Z[:,:-1]
+    carbon_stock=(alpha * forest_area) - U
+    
+    return {"carbon_stock": carbon_stock}
