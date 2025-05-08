@@ -1,10 +1,8 @@
 functions {
-  real log_value(vector gamma, vector theta, int T, int S, 
-                 matrix Z,
+  real log_value(vector gamma, vector theta, int T, int S, matrix Z,
                  vector forest_area_2017, vector alpha_p_Adym, matrix Bdym,
-                 vector ds_vect,  real xi,
-                  real pa, real pe, matrix carbon_stock) {
-
+                 vector ds_vect, real xi, real pa, real pe,
+                 matrix carbon_stock) {
     // Compute stock of carbon (X)
     row_vector[T] omega = gamma' * carbon_stock;
     vector[T + 1] X;
@@ -13,15 +11,14 @@ functions {
 
     // Compute aggregate X dot
     vector[T] Xdot_agg = (X[2 : (T + 1)] - X[1 : T]);
-    real term_1 = -pe * sum(ds_vect .* ( - Xdot_agg));
+    real term_1 = -pe * sum(ds_vect .* (-Xdot_agg));
 
     // Value of agricultural output
     vector[T + 1] agri_output = pa * (theta' * Z)';
     real term_2 = sum(ds_vect .* agri_output[2 : T + 1]);
 
-
     // Overall objective value
-    real obj_val = term_1 + term_2 ;
+    real obj_val = term_1 + term_2;
     real log_density_val = -1.0 / xi * obj_val;
 
     return log_density_val;
@@ -39,7 +36,7 @@ data {
   vector[T] alpha_p_Adym;
   matrix[T, T] Bdym;
   vector[T] ds_vect; // Time discounting vector
-  matrix[S,T] carbon_stock;
+  matrix[S, T] carbon_stock;
   real<lower=0> alpha; // Mean-reversion coefficient
   real zeta_u; // Penalty on adjustment costs
   real zeta_v; // Penalty on adjustment costs
@@ -74,20 +71,18 @@ data {
   int<lower=1> C_theta_fit; // Number of municipalities
   matrix[C_theta_fit, K_theta] X_theta_fit; // design matrix
   array[C_theta_fit] int m_theta_fit; // group map
-  // matrix[num_sites, C_theta_fit] G_theta_fit; // municipality projection
 
-  int<lower=1> N_nonzero_G_theta;        // number of nonzero entries
-  array[N_nonzero_G_theta] int row_G_theta;  // row indices (site)
-  array[N_nonzero_G_theta] int col_G_theta;  // column indices (municipality)
-  vector[N_nonzero_G_theta] val_G_theta;     // nonzero values (weights)
-
-
+  // Sparse G_theta
+  int<lower=0> G_nnz_theta; // Number of non-zero elements
+  vector[G_nnz_theta] G_w_theta; // Non-zero values
+  array[G_nnz_theta] int G_v_theta; // Column indices (1-based in Stan)
+  array[num_sites + 1] int G_u_theta; // Row pointers (1-based in Stan)
   real pa_2017; // price of cattle in 2017
 }
 transformed data {
   vector[N_theta] y_theta_w = W_theta .* y_theta;
   matrix[N_theta, K_theta] X_theta_w;
-  for (n in 1:N_theta)
+  for (n in 1 : N_theta)
     X_theta_w[n] = W_theta[n] * X_theta[n];
 }
 parameters {
@@ -104,10 +99,10 @@ parameters {
   real log_precision_v_theta;
 }
 transformed parameters {
-  real sigma_u_gamma = exp(-0.5*log_precision_u_gamma);
-  real sigma_v_gamma = exp(-0.5*log_precision_v_gamma);
-  real sigma_u_theta = exp(-0.5*log_precision_u_theta);
-  real sigma_v_theta = exp(-0.5*log_precision_v_theta);
+  real sigma_u_gamma = exp(-0.5 * log_precision_u_gamma);
+  real sigma_v_gamma = exp(-0.5 * log_precision_v_gamma);
+  real sigma_u_theta = exp(-0.5 * log_precision_u_theta);
+  real sigma_v_theta = exp(-0.5 * log_precision_v_theta);
 
   // Pre-multiply theta FE's by weights
   vector[N_theta] nu_theta_w = W_theta .* nu_theta[m_theta];
@@ -115,20 +110,19 @@ transformed parameters {
   vector[N_gamma] nu_gamma_sort = nu_gamma[m_gamma];
   vector[num_sites] nu_gamma_fit = nu_gamma[m_gamma_fit];
 
-
-
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma_fit);
 
-  vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta + nu_theta_fit);
-  vector<lower=0>[num_sites] theta= rep_vector(0, num_sites); 
-
-  for (n in 1:N_nonzero_G_theta) {
-    theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]/ pa_2017;
-  }
-
-
+  vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta
+                                          + nu_theta_fit);
+  vector<lower=0>[num_sites] theta = csr_matrix_times_vector(num_sites,
+                                                             C_theta_fit,
+                                                             G_w_theta,
+                                                             G_v_theta,
+                                                             G_u_theta,
+                                                             exp_log_theta)
+                                     / pa_2017;
 }
 model {
 
@@ -138,11 +132,6 @@ model {
   y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma_sort, sigma_u_gamma);
   y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
 
-  target += log_value(gamma, theta, T, S, Z,  
-                      forest_area_2017, alpha_p_Adym, Bdym, ds_vect, xi,  pa, pe,carbon_stock);
-
-
-
-
-
+  target += log_value(gamma, theta, T, S, Z, forest_area_2017, alpha_p_Adym,
+                      Bdym, ds_vect, xi, pa, pe, carbon_stock);
 }

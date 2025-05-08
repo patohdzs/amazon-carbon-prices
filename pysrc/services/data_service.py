@@ -1,7 +1,8 @@
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
+
 from ..services.file_service import get_path
 
 
@@ -75,23 +76,23 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
 
         # Cattle price in 2017
         pa_2017 = 44.9736197781184
-        
-        
-        G_sparse = coo_matrix(G)
-        row_G_theta = G_sparse.row + 1  # Stan uses 1-based indexing
-        col_G_theta = G_sparse.col + 1
-        val_G_theta = G_sparse.data
-        N_nonzero_G_theta = len(val_G_theta)
-        
+
+        G_sparse = csr_matrix(G)
+
+        # Extract CSR components
+        G_w = G_sparse.data  # Non-zero values
+        G_v = G_sparse.indices + 1  # Column indices
+        G_u = G_sparse.indptr + 1  # Row pointers
+        G_nnz = len(G_w)
+
         return {
             "C_theta_fit": C,
             "X_theta_fit": X,
             "m_theta_fit": m,
-            # "G_theta_fit": G,
-            "N_nonzero_G_theta": N_nonzero_G_theta,
-            "row_G_theta": row_G_theta,
-            "col_G_theta": col_G_theta,
-            "val_G_theta": val_G_theta,
+            "G_nnz_theta": G_nnz,
+            "G_w_theta": G_w,
+            "G_v_theta": G_v,
+            "G_u_theta": G_u,
             "pa_2017": pa_2017,
         }
 
@@ -109,7 +110,7 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         m = df["group_id"].astype(int)
 
         W = df["weights"].values
-        W= np.sqrt(W/np.std(W))
+        W = np.sqrt(W / np.std(W))
 
         return {
             "N_theta": N,
@@ -146,39 +147,18 @@ def load_site_data(num_sites: int, year: int = 2017, norm_fac: float = 1e9):
 
 def load_productivity_params(num_sites: int):
     data_dir = get_path("data", "calibration")
-    productivity_parameters = pd.read_csv(data_dir / f"productivity_params_{num_sites}.csv")
-    
-    theta = productivity_parameters["theta_fit"]
+    productivity_params = pd.read_csv(data_dir / f"productivity_params_{num_sites}.csv")
 
-    gamma = productivity_parameters["gamma_fit"]
+    theta = productivity_params["theta_fit"]
+
+    gamma = productivity_params["gamma_fit"]
 
     return (theta.to_numpy()[:,].flatten(), gamma.to_numpy()[:,].flatten())
 
 
-# def load_reg_data(num_sites: int):
-    # Set data directory
-    data_dir = get_path("data", "calibration", "hmc")
-
-    # Read site level data
-    site_theta_df = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
-    site_gamma_df = gpd.read_file(data_dir / f"gamma_data_site_{num_sites}.geojson")
-
-    # Remove geometries
-    site_theta_df = site_theta_df.iloc[:, :-1]
-    site_gamma_df = site_gamma_df.iloc[:, :-1]
-
-    print(f"Data successfully loaded from {data_dir}")
-    return (
-        site_theta_df,
-        site_gamma_df,
-    )
-
-
 def load_price_data():
     # Read data file
-    file_path = (
-        get_path("data", "calibration") / "seriesPriceCattle_prepared.csv"
-    )
+    file_path = get_path("data", "calibration") / "seriesPriceCattle_prepared.csv"
     df = pd.read_csv(file_path)
     average_prices = df.groupby("year")["price_real_mon_cattle"].mean()
     p_a_list = np.array(average_prices)
@@ -205,7 +185,7 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     forest_area_1995 /= norm_fac
 
     (theta, gamma) = load_productivity_params(num_sites)
-    
+
     print(f"Data successfully loaded from {data_dir}")
     return (
         zbar_1995,

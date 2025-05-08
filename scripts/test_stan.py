@@ -1,11 +1,15 @@
+import time
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from cmdstanpy import CmdStanModel
-from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 
 from pysrc.services.file_service import get_path
+
+output_dir = get_path("data", "calibration")
 
 # Compile Stan code
 sampler = CmdStanModel(
@@ -86,20 +90,22 @@ def load_theta_calib(num_sites: int, type: str = "reg"):
         # Cattle price in 2017
         pa_2017 = 44.9736197781184
 
-        G_sparse = coo_matrix(G)
-        row_G_theta = G_sparse.row + 1  # Stan uses 1-based indexing
-        col_G_theta = G_sparse.col + 1
-        val_G_theta = G_sparse.data
-        N_nonzero_G_theta = len(val_G_theta)
+        G_sparse = csr_matrix(G)
+
+        # Extract CSR components
+        G_w = G_sparse.data  # Non-zero values
+        G_v = G_sparse.indices + 1  # Column indices
+        G_u = G_sparse.indptr + 1  # Row pointers
+        G_nnz = len(G_w)
 
         return {
             "C_theta_fit": C,
             "X_theta_fit": X,
             "m_theta_fit": m,
-            "N_nonzero_G_theta": N_nonzero_G_theta,
-            "row_G_theta": row_G_theta,
-            "col_G_theta": col_G_theta,
-            "val_G_theta": val_G_theta,
+            "G_nnz_theta": G_nnz,
+            "G_w_theta": G_w,
+            "G_v_theta": G_v,
+            "G_u_theta": G_u,
             "pa_2017": pa_2017,
         }
 
@@ -150,30 +156,25 @@ stan_kwargs = dict(
     chains=4,
 )
 
+
 # Sampling from adjusted distribution
+start_time = time.time()
 fit = sampler.sample(
     data=data,
     **stan_kwargs,
 )
-print("Finished sampling!")
+end_time = time.time()
+print(f"Finished sampling! Time: {end_time - start_time:.4f} seconds")
 print(fit.diagnose())
 
 
-gamma_fit_mean = fit.stan_variable("gamma").mean(axis=0)
-theta_fit_mean = fit.stan_variable("theta").mean(axis=0)
+gamma_mean = fit.stan_variable("gamma").mean(axis=0)
+theta_mean = fit.stan_variable("theta").mean(axis=0)
 
-df = pd.DataFrame(
-    {
-        "gamma_fit": gamma_fit_mean,
-        "theta_fit": theta_fit_mean,
-    }
-)
+df = pd.DataFrame({"gamma_fit": gamma_mean, "theta_fit": theta_mean})
 
 # Save to CSV
-df.to_csv(
-    get_path("data", "calibration") / f"productivity_params_{num_sites}.csv",
-    index=False,
-)
+df.to_csv(output_dir / f"productivity_params_{num_sites}.csv", index=False)
 
 
 ## Test the model
@@ -221,7 +222,7 @@ df_all = pd.concat(
 )
 
 df_all.to_csv(
-    get_path("data", "calibration") / f"distribution_parameters_all_{num_sites}.csv",
+    output_dir / f"distribution_parameters_all_{num_sites}.csv",
     index=False,
 )
 
@@ -233,7 +234,7 @@ plt.ylabel("Frequency")
 plt.title(r"Histogram of $\sigma_u$")
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"test/{num_sites}/histogram_sigma_u_gamma.png", dpi=300)
+plt.savefig(f"results/{num_sites}/histogram_sigma_u_gamma.png", dpi=300)
 plt.show()
 
 
@@ -244,7 +245,7 @@ plt.ylabel("Frequency")
 plt.title(r"Histogram of $\sigma_nu$")
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"test/{num_sites}/histogram_sigma_nu_gamma.png", dpi=300)
+plt.savefig(f"results/{num_sites}/histogram_sigma_nu_gamma.png", dpi=300)
 plt.show()
 
 
@@ -255,7 +256,7 @@ plt.ylabel("Frequency")
 plt.title(r"Histogram of $\eta$")
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"test/{num_sites}/histogram_eta_gamma.png", dpi=300)
+plt.savefig(f"results/{num_sites}/histogram_eta_gamma.png", dpi=300)
 plt.show()
 
 
@@ -266,5 +267,5 @@ plt.ylabel("Frequency")
 plt.title(r"Histogram of $\zeta$")
 # plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"test/{num_sites}/histogram_zeta_gamma.png", dpi=300)
+plt.savefig(f"results/{num_sites}/histogram_zeta_gamma.png", dpi=300)
 plt.show()

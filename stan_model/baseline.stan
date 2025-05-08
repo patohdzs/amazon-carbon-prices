@@ -26,10 +26,11 @@ data {
   matrix[C_theta_fit, K_theta] X_theta_fit; // design matrix
   array[C_theta_fit] int m_theta_fit; // group map
 
-  int<lower=1> N_nonzero_G_theta; // number of nonzero entries
-  array[N_nonzero_G_theta] int row_G_theta; // row indices (site)
-  array[N_nonzero_G_theta] int col_G_theta; // column indices (municipality)
-  vector[N_nonzero_G_theta] val_G_theta; // nonzero values (weights)
+  // Sparse G_theta
+  int<lower=0> G_nnz_theta; // Number of non-zero elements
+  vector[G_nnz_theta] G_w_theta; // Non-zero values
+  array[G_nnz_theta] int G_v_theta; // Column indices (1-based in Stan)
+  array[num_sites + 1] int G_u_theta; // Row pointers (1-based in Stan)
   real pa_2017; // price of cattle in 2017
 }
 transformed data {
@@ -69,12 +70,19 @@ transformed parameters {
 
   vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta
                                           + nu_theta_fit);
-  vector<lower=0>[num_sites] theta= rep_vector(0, num_sites);
 
-  for (n in 1 : N_nonzero_G_theta) {
-    theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]
-                             / pa_2017;
-  }
+  vector<lower=0>[num_sites] theta = csr_matrix_times_vector(num_sites,
+                                                             C_theta_fit,
+                                                             G_w_theta,
+                                                             G_v_theta,
+                                                             G_u_theta,
+                                                             exp_log_theta)
+                                     / pa_2017;
+
+  // for (n in 1 : N_nonzero_G_theta) {
+  //   theta[row_G_theta[n]] += val_G_theta[n] * exp_log_theta[col_G_theta[n]]
+  //                            / pa_2017;
+  // }
 }
 model {
   // Priors
