@@ -63,7 +63,7 @@ def sample(
     stan_kwargs['inits']=inits
     
 
-    pickle_file = 'stan_model/compiled_model2.pkl'
+    pickle_file = 'stan_model/compiled_model.pkl'
 
     if os.path.exists(pickle_file):
         # Load the model from the pickle file
