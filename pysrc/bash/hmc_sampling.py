@@ -20,7 +20,7 @@ b=args.id
 num_sites=args.sites
 
 pe = pee + b
-solver="gams"
+solver="gurobi"
 pa=41.11
 
 results = adjusted.sample(
@@ -32,12 +32,14 @@ results = adjusted.sample(
     T=200,
     solver=solver,
     max_iter=100,
-    final_sample_size=5_000,
-    iter_sampling=1000,
-    iter_warmup=500,
+    final_sample_size=2_000,
+    iter_sampling=2000,
+    iter_warmup=1000,
     show_progress=True,
     seed=1,
-    inits=0.2,
+    # inits=0.1,
+    chains=4,  
+    tol=0.005,
 )
 output_base_path = os.path.join(
     str(get_path("output")),

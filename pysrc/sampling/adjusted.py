@@ -40,14 +40,30 @@ def sample(
     final_sample_size=2_000,
     **stan_kwargs,
 ):
-    # Instantiate stan sampler
-    # sampler = CmdStanModel(
-    #     stan_file=get_path("stan_model") / "adjusted.stan",
-    #     cpp_options={"STAN_THREADS": "true"},
-    #     force_compile=True,
-    # )
-    # print("test, norm_fac", norm_fac)
-    pickle_file = 'stan_model/compiled_model.pkl'
+    
+    
+    baseline_distribution = pd.read_csv(get_path("data","calibration")/f'distribution_parameters_all_{num_sites}.csv')
+    beta_gamma_cols = [col for col in baseline_distribution.columns if col.startswith('beta_gamma')]
+    beta_theta_cols = [col for col in baseline_distribution.columns if col.startswith('beta_theta')]
+    nu_gamma_cols = [col for col in baseline_distribution.columns if col.startswith('nu_gamma')]
+    nu_theta_cols = [col for col in baseline_distribution.columns if col.startswith('nu_theta')]
+    
+
+    inits = {
+        "log_precision_u_gamma": np.log(1/(baseline_distribution["sigma_u_gamma"].mean())**2),
+        "log_precision_v_gamma": np.log(1/(baseline_distribution["sigma_v_gamma"].mean())**2),
+        "log_precision_u_theta": np.log(1/(baseline_distribution["sigma_u_theta"].mean())**2),
+        "log_precision_v_theta": np.log(1/(baseline_distribution["sigma_v_theta"].mean())**2),
+        "beta_gamma": baseline_distribution[beta_gamma_cols].mean().tolist(),
+        "beta_theta": baseline_distribution[beta_theta_cols].mean().tolist(),
+        "nu_gamma": baseline_distribution[nu_gamma_cols].mean().tolist(),
+        "nu_theta": baseline_distribution[nu_theta_cols].mean().tolist(),
+    }
+
+    stan_kwargs['inits']=inits
+    
+
+    pickle_file = 'stan_model/compiled_model2.pkl'
 
     if os.path.exists(pickle_file):
         # Load the model from the pickle file

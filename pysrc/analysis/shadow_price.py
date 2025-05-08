@@ -3,7 +3,11 @@ import numpy as np
 from pysrc.optimization import solve_planner_problem,gams
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data_1995,load_price_data
-
+# import argparse
+# parser = argparse.ArgumentParser(description="shadow price calculation")
+# parser.add_argument("--model",default="det")
+# args = parser.parse_args()
+# mod=args.model
 
 def shadow_price_opt(
     zbar_1995,
@@ -55,7 +59,7 @@ def shadow_price_opt(
     z_2008_agg = np.sum(z_2008) / 1e9
     ratio = (np.sum(Z[13]) - z_2008_agg) / z_2008_agg
 
-    return ratio
+    return np.abs(ratio)
 
 
 def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_low=5, pe_high=8):
@@ -178,24 +182,42 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
     return min_result, min_pe
 
 
-## det 1043 sites
+
+
+# det 1043 sites
 # min_result,det_1043_pe=shadow_price_cal(sitenum=1043,model='det')
 # print("min_result",min_result,"min_pe",det_1043_pe)
-# min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det')
-# print("min_result",min_result,"min_pe",det_78_pe)
+min_result,det_78_pe=shadow_price_cal(sitenum=78,model='det',pa=35.71)
+print("min_result",min_result,"min_pe",det_78_pe)
 
 
 # hmc 78 sites
-# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=10)
+# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=10,pe_low=4.9, pe_high=5.1)
 # print("min_result", min_result, "min_pe", hmc_78_pe)
+
+# min_result, hmc_78_pe = shadow_price_cal(sitenum=78, model="hmc", xi=1,pe_low=2.0, pe_high=2.5)
+# print("min_result", min_result, "min_pe", hmc_78_pe)
+
+
+
+
 
 # min_result, hmc_78_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=5,solver='gams',pe_low=4.3, pe_high=4.31)
 # print("min_result", min_result, "min_pe", hmc_78_pe)
+
+
+
+
 
 # ## mpc 78 sites
 # min_result,mpc_78_pe=shadow_price_cal(sitenum=78,model='mpc',solver='gams',pe_low=4.5, pe_high=6.2)
 # print("min_result",min_result,"min_pe",mpc_78_pe)
 
 
-min_result,mpc_78_pe=shadow_price_cal(sitenum=1043,model='mpc',solver='gams',pe_low=4.5, pe_high=4.51)
-print("min_result",min_result,"min_pe",mpc_78_pe)
+# min_result,mpc_78_pe=shadow_price_cal(sitenum=1043,model='det',solver='gurobi',pe_low=4.5, pe_high=4.51)
+# print("min_result",min_result,"min_pe",mpc_78_pe)
+
+
+
+
+# print("det-1043",det_1043_pe,"det-78",det_78_pe,"hmc-78-xi",hmc_78_pe)

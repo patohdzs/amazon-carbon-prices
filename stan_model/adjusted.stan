@@ -93,13 +93,13 @@ transformed data {
 parameters {
   // Gamma regression parameters
   vector[K_gamma] beta_gamma;
-  vector[M_gamma] nu_gamma_transform;
+  vector[M_gamma] nu_gamma;
   real log_precision_u_gamma;
   real log_precision_v_gamma;
 
   // Theta regression parameters
   vector[K_theta] beta_theta;
-  vector[M_theta] nu_theta_transform;
+  vector[M_theta] nu_theta;
   real log_precision_u_theta;
   real log_precision_v_theta;
 }
@@ -109,10 +109,6 @@ transformed parameters {
   real sigma_u_theta = exp(-0.5*log_precision_u_theta);
   real sigma_v_theta = exp(-0.5*log_precision_v_theta);
 
-
-  vector[M_gamma] nu_gamma = sigma_v_gamma * nu_gamma_transform;
-  vector[M_theta] nu_theta = sigma_v_theta * nu_theta_transform;
-  
   // Pre-multiply theta FE's by weights
   vector[N_theta] nu_theta_w = W_theta .* nu_theta[m_theta];
   vector[C_theta_fit] nu_theta_fit = nu_theta[m_theta_fit];
@@ -124,11 +120,6 @@ transformed parameters {
   // Projection
   vector<lower=0>[num_sites] gamma = exp(X_gamma_fit * beta_gamma
                                          + nu_gamma_fit);
-  // vector<lower=0>[num_sites] theta = (G_theta_fit
-  //                                     * exp(X_theta_fit * beta_theta
-  //                                           + nu_theta_fit))
-  //                                    / pa_2017;
-
 
   vector[C_theta_fit] exp_log_theta = exp(X_theta_fit * beta_theta + nu_theta_fit);
   vector<lower=0>[num_sites] theta= rep_vector(0, num_sites); 
@@ -141,14 +132,17 @@ transformed parameters {
 }
 model {
 
-  nu_gamma_transform ~ normal(0, 1);
-  nu_theta_transform ~ normal(0, 1);
+  nu_gamma ~ normal(0, sigma_v_gamma);
+  nu_theta ~ normal(0, sigma_v_theta);
 
   y_gamma ~ normal(X_gamma * beta_gamma + nu_gamma_sort, sigma_u_gamma);
   y_theta_w ~ normal(X_theta_w * beta_theta + nu_theta_w, sigma_u_theta);
 
   target += log_value(gamma, theta, T, S, Z,  
                       forest_area_2017, alpha_p_Adym, Bdym, ds_vect, xi,  pa, pe,carbon_stock);
+
+
+
 
 
 }

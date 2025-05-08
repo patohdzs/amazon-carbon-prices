@@ -25,7 +25,7 @@ pee=args.pee
 xi=args.xi
 num_sites=args.sites
 
-solver="gams"
+solver="gurobi"
 pa=41.11
 
 
@@ -113,4 +113,4 @@ for param, top in top_kl_divergences.items():
         
 print("start plot densities")
 
-density(num_sites=num_sites,pee=pee,xi=xi,solver="gams")
+density(num_sites=num_sites,pee=pee,xi=xi,solver=solver)

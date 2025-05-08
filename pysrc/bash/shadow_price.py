@@ -1,13 +1,13 @@
 import numpy as np
 
-from pysrc.optimization import solve_planner_problem,gams
+from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data_1995,load_price_data
 import argparse
 
 parser = argparse.ArgumentParser(description="shadow price calculation")
 parser.add_argument("--id",type=int,default=400)
-parser.add_argument("--xi",type=int,default=5)
+parser.add_argument("--xi",type=float,default=5)
 args = parser.parse_args()
 seed = args.id
 seed_i = seed/10
@@ -54,7 +54,7 @@ def shadow_price_opt(
     return ratio
 
 
-def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_low=5, pe_high=8):
+def shadow_price_cal(sitenum=78, pa=41.11, solver="gurobi", model="det", xi=2, pe_low=5, pe_high=8):
     if model == "det":
         (
             zbar_1995,
@@ -108,12 +108,12 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
                 T=200,
                 solver=solver,
                 max_iter=100,
-                final_sample_size=5_000,
-                iter_sampling=1000,
-                iter_warmup=500,
+                final_sample_size=2_000,
+                iter_sampling=2000,
+                iter_warmup=1000,
                 show_progress=True,
                 seed=1,
-                inits=0.2,
+                # inits=0.1,
             )
 
             theta = np.mean(samples["final_sample"][:, :sitenum], axis=0)
@@ -184,6 +184,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gams", model="det", xi=2, pe_
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
-min_result, hmc_1043_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=xi,solver='gams',pe_low=seed_i, pe_high=(seed_i+0.01))
+min_result, hmc_1043_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
 print("min_result", min_result, "min_pe", hmc_1043_pe)
 

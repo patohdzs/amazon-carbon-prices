@@ -1,5 +1,6 @@
 import os
 import pickle
+import pandas as pd
 import numpy as np
 from pysrc.analysis import value_decomposition
 from pysrc.optimization import solve_planner_problem
@@ -9,32 +10,21 @@ from pysrc.services.file_service import get_path
 
 # ## Model scenario
 solver = "gurobi"  # need to install gurobi solver
-pee = 4.5
+pee = 5.0
 pa = 41.11
-num_sites = 78
+num_sites = 1043
 T = 200
 b = [0, 10, 15, 20, 25]
 pe_values = [pee + bi for bi in b]
 xi = 0.5
 pe=pee
 
-# inits = {
-#     "log_precision_u_gamma": 4,
-#     "log_precision_v_gamma": 4,
-#     "log_precision_u_theta": 4,
-#     "log_precision_v_theta": 4,
-#     "beta_gamma": [0.2] * 6,
-#     "beta_theta": [0.2] * 8,
-#     "nu_gamma_transform": [0.2] * 78,
-#     "nu_theta_transform": [0.2] * 62,
-# }
-
 
 results = adjusted.sample(
     xi=xi,
     pe=pe,
     pa=pa,
-    weight=0.20,
+    weight=0.25,
     num_sites=num_sites,
     T=200,
     solver=solver,
@@ -45,12 +35,6 @@ results = adjusted.sample(
     show_progress=True,
     chains=4,
     seed=1,
-    inits=0.2,
-    adapt_delta=0.99,
-    # inits=inits,
-    zeta_u=1.66e-4 * 1e9,
-    zeta_v=1.00e-4 * 1e9,
-    norm_fac=1e9,
 )
 
 output_base_path = os.path.join(
