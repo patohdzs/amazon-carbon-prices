@@ -125,7 +125,6 @@ transformed parameters {
                                      / pa_2017;
 }
 model {
-
   nu_gamma ~ normal(0, sigma_v_gamma);
   nu_theta ~ normal(0, sigma_v_theta);
 

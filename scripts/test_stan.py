@@ -1,12 +1,10 @@
 import time
 
-import geopandas as gpd
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from cmdstanpy import CmdStanModel
-from scipy.sparse import csr_matrix
 
+from pysrc.services.data_service import load_gamma_calib, load_theta_calib
 from pysrc.services.file_service import get_path
 
 output_dir = get_path("data", "calibration")
@@ -17,123 +15,6 @@ sampler = CmdStanModel(
     cpp_options={"STAN_THREADS": "true"},
     force_compile=True,
 )
-
-
-def load_gamma_calib(num_sites: int, type: str = "reg"):
-    data_dir = get_path("data", "calibration")
-    if type == "fit":
-        # Used for gamma projection onto fitted values
-        df = gpd.read_file(data_dir / f"gamma_fit_{num_sites}.geojson")
-
-        # Get design matrix and its dimensions
-        X = df.iloc[:, :6].to_numpy()
-        N, K = X.shape
-
-        # Large group indicator
-        m = df["id_group"].astype(int)
-
-        return {
-            "X_gamma_fit": X,
-            "m_gamma_fit": m,
-        }
-    else:
-        # Used for gamma regression
-        df = gpd.read_file(data_dir / "gamma_reg.geojson")
-
-        # Get design matrix and its dimensions
-        M = df["id_group"].unique().size
-        y = df["log_co2e_ha_2017"]
-        X = df.iloc[:, :6].to_numpy()
-        N, K = X.shape
-
-        # Large group indicator
-        m = df["id_group"].astype(int)
-
-        return {
-            "N_gamma": N,
-            "M_gamma": M,
-            "K_gamma": K,
-            "y_gamma": y,
-            "X_gamma": X,
-            "m_gamma": m,
-        }
-
-
-def load_theta_calib(num_sites: int, type: str = "reg"):
-    data_dir = get_path("data", "calibration")
-    if type == "fit":
-        df = gpd.read_file(data_dir / f"theta_fit_{num_sites}.geojson")
-
-        # Create the projection matrix
-        G = (
-            df.pivot(index="id", columns="muni_id", values="muni_site_area")
-            .fillna(0)
-            .to_numpy()
-        )
-
-        # Normalize to make row-stochastic
-        G = G / G.sum(axis=1, keepdims=True)
-
-        # Collapse data set to the municipality level
-        df = df.sort_values("muni_id")
-
-        # Keep first observation per municipality
-        df = df.drop_duplicates(subset="muni_id", keep="first")
-
-        # Get design matrix
-        X = df.iloc[:, :8].to_numpy()
-        C, _ = X.shape
-
-        # Large group indicator
-        m = df["group_id"].astype(int)
-
-        # Cattle price in 2017
-        pa_2017 = 44.9736197781184
-
-        G_sparse = csr_matrix(G)
-
-        # Extract CSR components
-        G_w = G_sparse.data  # Non-zero values
-        G_v = G_sparse.indices + 1  # Column indices
-        G_u = G_sparse.indptr + 1  # Row pointers
-        G_nnz = len(G_w)
-
-        return {
-            "C_theta_fit": C,
-            "X_theta_fit": X,
-            "m_theta_fit": m,
-            "G_nnz_theta": G_nnz,
-            "G_w_theta": G_w,
-            "G_v_theta": G_v,
-            "G_u_theta": G_u,
-            "pa_2017": pa_2017,
-        }
-
-    else:
-        df = gpd.read_file(data_dir / "theta_reg.geojson")
-        # Get number of groups
-        M = df["group_id"].unique().size
-
-        # Get design matrix and its dimensions
-        y = df["log_slaughter"]
-        X = df.iloc[:, :8].to_numpy()
-        N, K = X.shape
-
-        # Large group indicator
-        m = df["group_id"].astype(int)
-
-        W = df["weights"].values
-        W = np.sqrt(W / np.std(W))
-
-        return {
-            "N_theta": N,
-            "M_theta": M,
-            "K_theta": K,
-            "y_theta": y,
-            "X_theta": X,
-            "m_theta": m,
-            "W_theta": W,
-        }
 
 
 # Organize input data for Stan
