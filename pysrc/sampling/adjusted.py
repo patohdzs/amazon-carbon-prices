@@ -50,14 +50,14 @@ def sample(
     
 
     inits = {
-        "log_precision_u_gamma": np.log(1/(baseline_distribution["sigma_u_gamma"].mean())**2),
-        "log_precision_v_gamma": np.log(1/(baseline_distribution["sigma_v_gamma"].mean())**2),
-        "log_precision_u_theta": np.log(1/(baseline_distribution["sigma_u_theta"].mean())**2),
-        "log_precision_v_theta": np.log(1/(baseline_distribution["sigma_v_theta"].mean())**2),
+        "log_precision_u_gamma": np.log(1/(baseline_distribution["sigma_u_gamma"].mean())),
+        "log_precision_v_gamma": np.log(1/(baseline_distribution["sigma_v_gamma"].mean())),
+        "log_precision_u_theta": np.log(1/(baseline_distribution["sigma_u_theta"].mean())),
+        "log_precision_v_theta": np.log(1/(baseline_distribution["sigma_v_theta"].mean())),
         "beta_gamma": baseline_distribution[beta_gamma_cols].mean().tolist(),
         "beta_theta": baseline_distribution[beta_theta_cols].mean().tolist(),
-        "nu_gamma": baseline_distribution[nu_gamma_cols].mean().tolist(),
-        "nu_theta": baseline_distribution[nu_theta_cols].mean().tolist(),
+        "nu_gamma_transform": [0.01] * len(nu_gamma_cols),
+        "nu_theta_transform": [0.01] * len(nu_theta_cols),
     }
 
     stan_kwargs['inits']=inits
@@ -132,6 +132,22 @@ def sample(
     # Loop until convergence
     while cntr < max_iter and pct_error > tol:
         print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
+        
+        if cntr > 0:
+        
+            inits = {
+            "log_precision_u_gamma": fit.stan_variable("log_precision_u_gamma").mean(),
+            "log_precision_v_gamma": fit.stan_variable("log_precision_v_gamma").mean(),
+            "log_precision_u_theta": fit.stan_variable("log_precision_u_theta").mean(),
+            "log_precision_v_theta": fit.stan_variable("log_precision_v_theta").mean(),
+            "beta_gamma": fit.stan_variable("beta_gamma").mean(axis=0),
+            "beta_theta": fit.stan_variable("beta_theta").mean(axis=0),
+            "nu_gamma_transform": [0.1] * len(nu_gamma_cols),
+            "nu_theta_transform": [0.1] * len(nu_theta_cols),
+            }
+
+            stan_kwargs['inits']=inits
+        
 
         # Flatten uncertain values
         uncertain_vals = np.asarray(uncertain_vals).flatten()

@@ -154,7 +154,7 @@ def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="d
     plt.show()
 
 
-def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det"):
+def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, model="det"):
     output_folder = (
         str(get_path("output")) + f"/figures/density/site_{num_sites}/xi{xi}/"
     )
@@ -193,7 +193,7 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1, model="det")
     with open(result_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         b15 = pickle.load(f)
 
-    with open(prior_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
+    with open(prior_folder + f"/pe_{pee_det+15}/results.pcl", "rb") as f:
         results_unadjusted = pickle.load(f)
 
     theta_unadjusted = results_unadjusted["final_sample"][:16000, :num_sites]
@@ -336,7 +336,7 @@ def trajectory_diff(
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     df_ori = pd.read_csv(
-        str(get_path("data")) + f"/calibration/hmc/calibration_{num_sites}_sites.csv"
+        str(get_path("data")) + f"/calibration/calibration_{num_sites}_sites.csv"
     )
     dfz_bar = df_ori["zbar_2017"]
     dfz_bar_np = dfz_bar.to_numpy()
@@ -389,10 +389,12 @@ def trajectory_diff(
     plt.xlim(0, max(time) + 2)
     if b==0:
         plt.ylim(12,24)
+        if xi==0.5:
+            plt.ylim(10, 26)
     plt.legend(loc="upper left", ncol=5, frameon=False, fontsize=16)
     plt.savefig(
         output_folder
-        + f"/aggregate_percentage_Z_b{b}_pehmc_{pe_hmc}_pedet_{pe_det}.png"
+        + f"/aggregate_percentage_Z_b{b}_pehmc_{pe_hmc}_pedet_{pe_det}_xi_{xi}.png"
     )
     plt.show()
 

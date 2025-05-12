@@ -95,18 +95,21 @@ def spatial_allocation(solver='gams',
 
 
 
-
-    bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=20)
-
+    if b==0:
+        bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
+    elif b==15:
+        bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
+        
+        
     plt.figure(figsize=(8, 6))
     plt.hist(positions_hmc_array[positions_hmc_array != 111],  bins=bin_edges, color='red', alpha=0.6,label='ambiguity averse')
     plt.hist(positions_det_array[positions_det_array != 111], bins=bin_edges, color='blue', alpha=0.6,label='ambiguity neutral')
     plt.xlabel("years (minus for deforestation)", fontsize=14)
     plt.ylabel("frequency", fontsize=14)
     if b==0:
-        plt.xlim(-50,50)
+        plt.xlim(-55,55)
     elif b==15:
-        plt.xlim(0,30)
+        plt.xlim(0,40)
     plt.legend()
     plt.savefig(os.path.join(output_folder, f"figures/decision_histogram_pehmc_{pe_hmc}_pedet_{pe_det}_xi_{xi}.png"))
     plt.show()
@@ -118,6 +121,8 @@ def spatial_allocation(solver='gams',
 
     print(f"Number of observations missed for HMC: {count_hmc/1043}")
     print(f"Number of observations missed for DET: {count_det/1043}")
+    
+
     
     return
 

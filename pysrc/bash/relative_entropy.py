@@ -27,7 +27,7 @@ num_sites=args.sites
 
 solver="gurobi"
 pa=41.11
-
+pee_det=6.6
 
 
 result_folder = os.path.join(
@@ -53,7 +53,7 @@ with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
 with open(result_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
     b15 = pickle.load(f)
 
-with open(prior_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
+with open(prior_folder + f"/pe_{pee_det+15}/results.pcl", "rb") as f:
     results_unadjusted = pickle.load(f)
     
     

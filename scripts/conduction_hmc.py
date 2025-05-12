@@ -27,6 +27,40 @@ spatial_allocation(num_sites=1043,pe_hmc=4.7,pe_det=6.6,xi=1.0,solver="gurobi",b
 spatial_allocation(num_sites=1043,pe_hmc=4.7,pe_det=6.6,xi=1.0,solver="gurobi",b=15) 
 
 
+
+
+
+## xi0_5
+get_optimization(num_sites=1043,pee=2.8,model="hmc",xi=0.5,solver="gurobi")
+get_optimization(num_sites=1043,pee=6.6,model="hmc",xi=0.5,solver="gurobi")
+
+ambiguity_decom(num_sites=1043,pe_det=6.6,pe_hmc=2.8,xi=0.5,solver="gurobi") 
+trajectory_diff(num_sites=1043,pe_hmc=6.6,pe_det=6.6,b=0,solver="gurobi",pa=41.11,xi=0.5) # Figure 11
+trajectory_diff(num_sites=1043,pe_hmc=2.8,pe_det=6.6,b=0,solver="gurobi",pa=41.11,xi=0.5) # Figure 14
+trajectory_diff(num_sites=1043,pe_hmc=2.8,pe_det=6.6,b=15,solver="gurobi",pa=41.11,xi=0.5) # Figure 14
+
+
+spatial_allocation(num_sites=1043,pe_hmc=6.6,pe_det=6.6,xi=0.5,solver="gurobi",b=0) # Figure 12
+spatial_allocation(num_sites=1043,pe_hmc=2.8,pe_det=6.6,xi=0.5,solver="gurobi",b=0) 
+spatial_allocation(num_sites=1043,pe_hmc=2.8,pe_det=6.6,xi=0.5,solver="gurobi",b=15) 
+
+
+
+## xi2
+get_optimization(num_sites=1043,pee=5.5,model="hmc",xi=2.0,solver="gurobi")
+get_optimization(num_sites=1043,pee=6.6,model="hmc",xi=2.0,solver="gurobi")
+
+ambiguity_decom(num_sites=1043,pe_det=6.6,pe_hmc=5.5,xi=2.0,solver="gurobi") 
+trajectory_diff(num_sites=1043,pe_hmc=6.6,pe_det=6.6,b=0,solver="gurobi",pa=41.11,xi=2.0) # Figure 11
+trajectory_diff(num_sites=1043,pe_hmc=5.5,pe_det=6.6,b=0,solver="gurobi",pa=41.11,xi=2.0) # Figure 14
+trajectory_diff(num_sites=1043,pe_hmc=5.5,pe_det=6.6,b=15,solver="gurobi",pa=41.11,xi=2.0) # Figure 14
+
+
+spatial_allocation(num_sites=1043,pe_hmc=6.6,pe_det=6.6,xi=2.0,solver="gurobi",b=0) # Figure 12
+spatial_allocation(num_sites=1043,pe_hmc=5.5,pe_det=6.6,xi=2.0,solver="gurobi",b=0) 
+spatial_allocation(num_sites=1043,pe_hmc=5.5,pe_det=6.6,xi=2.0,solver="gurobi",b=15) 
+
+
 print("hmc All done!")
 
 

@@ -10,7 +10,7 @@ from pysrc.services.file_service import get_path
 
 # ## Model scenario
 solver = "gurobi"  # need to install gurobi solver
-pee = 5.0
+pee = 2.8
 pa = 41.11
 num_sites = 1043
 T = 200
@@ -30,11 +30,11 @@ results = adjusted.sample(
     solver=solver,
     max_iter=100,
     final_sample_size=2_000,
-    iter_sampling=2000,
+    iter_sampling=4000,
     iter_warmup=1000,
     show_progress=True,
     chains=4,
-    seed=1,
+    seed=123,
 )
 
 output_base_path = os.path.join(
