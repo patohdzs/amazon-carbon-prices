@@ -1,25 +1,23 @@
-import geopandas as gpd
-import numpy as np
-import pandas as pd
-from cmdstanpy import CmdStanModel
 import matplotlib.pyplot as plt
+import pandas as pd
+
 from pysrc.services.file_service import get_path
 
-num_sites=1043
+num_sites = 1043
 
 data_dir = get_path("data", "calibration")
-df =  pd.read_csv(data_dir / f"distribution_parameters_all_{num_sites}.csv")
+df = pd.read_csv(data_dir / f"distribution_parameters_all_{num_sites}.csv")
 
 
-df["precision_eta_gamma"] = 1.0 / df["sigma_u_gamma"]**2
-df["precision_eta_theta"] = 1.0 / df["sigma_u_theta"]**2
-df["precision_zeta_gamma"] = 1.0 / df["sigma_v_gamma"]**2
-df["precision_zeta_theta"] = 1.0 / df["sigma_v_theta"]**2
+df["precision_eta_gamma"] = 1.0 / df["sigma_u_gamma"] ** 2
+df["precision_eta_theta"] = 1.0 / df["sigma_u_theta"] ** 2
+df["precision_zeta_gamma"] = 1.0 / df["sigma_v_gamma"] ** 2
+df["precision_zeta_theta"] = 1.0 / df["sigma_v_theta"] ** 2
 
 
 plot_dir = get_path("test", "plots") / f"histograms_{num_sites}"
 plot_dir.mkdir(parents=True, exist_ok=True)
-import re
+
 
 # Suppose this is your column list:
 columns = df.columns.tolist()
