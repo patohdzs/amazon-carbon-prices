@@ -64,48 +64,6 @@ centroids <- calib_df %>%
 calib_df$lon <- centroids[, "X"]
 calib_df$lat <- centroids[, "Y"]
 
-# Regress log-gamma on geographic covariates
-model_1 <- lm(
-  formula = log(co2e) ~
-    log(hist_precip) +
-    log(hist_temp) +
-    asinh(lat) +
-    asinh(lon),
-  data = calib_df,
-  na.action = na.exclude
-)
-
-model_2 <- lm(
-  formula = log(co2e) ~
-    log(hist_precip) +
-    log(hist_temp) +
-    lat +
-    lon,
-  data = calib_df,
-  na.action = na.exclude
-)
-
-model_3 <- lm(
-  formula = log(co2e) ~
-    log(hist_precip) +
-    log(hist_temp) +
-    lat +
-    lon +
-    lat * lon,
-  data = calib_df,
-  na.action = na.exclude
-)
-summary(model_3)
-
-
-
-# Predict gammas
-calib_df <- calib_df %>%
-  mutate(muni_reg_gamma = gamma) %>%
-  mutate(site_reg_gamma = exp(predict(model_3, .)))
-
-
-
 
 save(calib_df, file = "data/calibration/gamma_calibration_78_sites.Rdata")
 

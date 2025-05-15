@@ -1,7 +1,7 @@
 # Start timer
 tictoc::tic(msg = "_masterfile.R script", log = TRUE)
 
-source("rsrc/raw2clean/_masterfile.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/cleaning/_masterfile.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())

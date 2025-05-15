@@ -24,10 +24,6 @@ map_basin <- st_read(
   layer = "BASIN_LEVEL_2_PNRH"
 )
 
-
-
-
-
 calib_df <- calib_df %>%
   st_transform(st_crs(map_basin))
 
@@ -52,18 +48,18 @@ map_basin_tf <- map_basin %>%
 muni_with_basin_full <- st_join(muni_data, map_basin_tf, join = st_nearest_feature)
 
 muni_to_reassign <- muni_with_basin_full %>%
-  filter(FEATURE_ID %in% c(11, 100, 112,154,256)) %>%
+  filter(FEATURE_ID %in% c(11, 100, 112, 154, 256)) %>%
   select(-FEATURE_ID)
 
 
 map_basin_tf_reassign <- map_basin %>%
   select(FEATURE_ID) %>%
-  filter(!FEATURE_ID %in% c(11, 100,107, 112,154,256))
+  filter(!FEATURE_ID %in% c(11, 100, 107, 112, 154, 256))
 
 muni_to_reassign <- st_join(muni_to_reassign, map_basin_tf_reassign, join = st_nearest_feature)
 
 muni_with_basin <- bind_rows(
-  muni_with_basin_full %>% filter(!FEATURE_ID %in% c(11, 100, 112,154,256)),
+  muni_with_basin_full %>% filter(!FEATURE_ID %in% c(11, 100, 112, 154, 256)),
   muni_to_reassign
 )
 
@@ -115,9 +111,9 @@ theta_reg_re <- muni_data %>%
       historical_precip +
       distance +
       log(farm_gate_price_2017) +
-      (1 | FEATURE_ID),  # Random intercept for FEATURE_ID
+      (1 | FEATURE_ID), # Random intercept for FEATURE_ID
     na.action = na.exclude,
-    weights = pasture_area_2017/mean(pasture_area_2017)
+    weights = pasture_area_2017 / mean(pasture_area_2017)
   )
 
 # Show the summary of the random effects model
@@ -130,7 +126,7 @@ random_effects <- ranef(theta_reg_re)$FEATURE_ID %>%
 
 # Extract fitted values
 muni_data <- muni_data %>%
-  mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .))) 
+  mutate(slaughter_value_per_ha_fitted = exp(predict(theta_reg, .)))
 
 
 
@@ -193,44 +189,47 @@ save(calib_df, file = "data/calibration/theta_calibration_78_sites.Rdata")
 
 
 muni_data <- muni_data %>%
-  mutate(group_id = as.numeric(factor(FEATURE_ID)))
+  mutate(group_id = as.numeric(factor(FEATURE_ID)), muni_id = muni_code)
 
 
-df_fit<-muni_data %>%
-  select(lat,historical_temp,historical_precip,distance,farm_gate_price_2017,group_id)%>%
-  mutate(X1 = 1,sq_lat=lat^2,sq_temp=historical_temp^2,log_gate_price=log(farm_gate_price_2017))%>%
-  select(    X1,
-             lat,
-             sq_lat,
-             historical_temp,
-             sq_temp,
-             historical_precip,
-             distance,
-             log_gate_price,
-             group_id
-             )
+df_fit <- muni_data %>%
+  select(lat, historical_temp, historical_precip, distance, farm_gate_price_2017, group_id, muni_id) %>%
+  mutate(X1 = 1, sq_lat = lat^2, sq_temp = historical_temp^2, log_gate_price = log(farm_gate_price_2017)) %>%
+  select(
+    X1,
+    lat,
+    sq_lat,
+    historical_temp,
+    sq_temp,
+    historical_precip,
+    distance,
+    log_gate_price,
+    group_id,
+    muni_id
+  )
 
-df_reg<-muni_data %>%
+df_reg <- muni_data %>%
   filter(slaughter_value_per_ha_2017 > 0) %>%
   filter(!is.na(slaughter_value_per_ha_2017)) %>%
-  select(pasture_area_2017,slaughter_value_per_ha_2017,lat,historical_temp,historical_precip,distance,farm_gate_price_2017,group_id)%>%
-  mutate(X1 = 1,sq_lat=lat^2,sq_temp=historical_temp^2,log_gate_price=log(farm_gate_price_2017),log_slaughter=log(slaughter_value_per_ha_2017),weights=pasture_area_2017)%>%
-  select(    X1,
-             lat,
-             sq_lat,
-             historical_temp,
-             sq_temp,
-             historical_precip,
-             distance,
-             log_gate_price,
-             log_slaughter,
-             weights,
-             group_id
+  select(pasture_area_2017, slaughter_value_per_ha_2017, lat, historical_temp, historical_precip, distance, farm_gate_price_2017, group_id) %>%
+  mutate(X1 = 1, sq_lat = lat^2, sq_temp = historical_temp^2, log_gate_price = log(farm_gate_price_2017), log_slaughter = log(slaughter_value_per_ha_2017), weights = pasture_area_2017) %>%
+  select(
+    X1,
+    lat,
+    sq_lat,
+    historical_temp,
+    sq_temp,
+    historical_precip,
+    distance,
+    log_gate_price,
+    log_slaughter,
+    weights,
+    group_id
   )
 
 
 scaling_params_fit <- df_reg %>%
-  st_drop_geometry() %>% 
+  st_drop_geometry() %>%
   summarise(
     mean_lat = mean(lat, na.rm = TRUE),
     sd_lat = sd(lat, na.rm = TRUE),
@@ -271,7 +270,7 @@ df_fit_scaled <- df_fit %>%
     distance = (distance - scaling_params_fit$mean_distance) / scaling_params_fit$sd_distance,
     log_gate_price = (log_gate_price - scaling_params_fit$mean_log_gate_price) / scaling_params_fit$sd_log_gate_price
   ) %>%
-  select(X1, lat, sq_lat, historical_temp, sq_temp, historical_precip, distance, log_gate_price, group_id)
+  select(X1, lat, sq_lat, historical_temp, sq_temp, historical_precip, distance, log_gate_price, group_id, muni_id)
 
 
 
@@ -279,18 +278,18 @@ df_fit_scaled <- df_fit %>%
 
 
 st_write(df_reg_scaled,
-         "data/calibration/hmc/theta_reg.geojson",
-         driver = "GeoJSON",
-         delete_dsn = TRUE
+  "data/calibration/theta_reg.geojson",
+  driver = "GeoJSON",
+  delete_dsn = TRUE
 )
 
 
 
 
-id_sfdata<-calib_df %>%
+id_sfdata <- calib_df %>%
   select(id)
 
-site_theta<- df_fit_scaled %>%
+site_theta <- df_fit_scaled %>%
   st_intersection(id_sfdata)
 
 site_theta$muni_site_area <-
@@ -300,7 +299,7 @@ site_theta$muni_site_area <-
 
 st_write(
   site_theta,
-  sprintf("data/calibration/hmc/theta_fit_78.geojson", n),
+  sprintf("data/calibration/theta_fit_78.geojson", n),
   driver = "GeoJSON",
   delete_dsn = TRUE
 )
@@ -309,16 +308,16 @@ st_write(
 
 
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
-calib_1043<-calib_1043 %>%
-  mutate(id=id.x)
+calib_1043 <- calib_1043 %>%
+  mutate(id = id.x)
 
 calib_1043 <- calib_1043 %>%
   st_transform(st_crs(muni_data))
 
-id_sfdata<-calib_1043 %>%
+id_sfdata <- calib_1043 %>%
   select(id)
 
-site_theta<- df_fit_scaled %>%
+site_theta <- df_fit_scaled %>%
   st_intersection(id_sfdata)
 
 site_theta$muni_site_area <-
@@ -328,7 +327,7 @@ site_theta$muni_site_area <-
 
 st_write(
   site_theta,
-  sprintf("data/calibration/hmc/theta_fit_1043.geojson", n),
+  sprintf("data/calibration/theta_fit_1043.geojson", n),
   driver = "GeoJSON",
   delete_dsn = TRUE
 )

@@ -74,16 +74,19 @@ source("rsrc/processing/prep_state_emissions.R", encoding = "UTF-8", echo = TRUE
 rm(list = ls())
 
 # Prepare rasters for mapbiomas variables
-source("rsrc/processing/prep_land_use_rasters.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/processing/prep_rst_land_use.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())
 
 # Prepare generate aggregated sample of interest
-source("rsrc/processing/prep_biome_rasters.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/processing/prep_rst_biome.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())
 
 # End timer
 toc(log = TRUE)
+
+
+cat("processing process all done\n")

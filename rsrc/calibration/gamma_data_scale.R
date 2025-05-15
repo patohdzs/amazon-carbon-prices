@@ -92,14 +92,14 @@ df2_scaled <- df2 %>%
 
 # Output municipality-level regression data
 st_write(df_scaled,
-         "data/calibration/hmc/gamma_reg_site_1043.geojson",
+         "data/calibration/gamma_reg.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE
 )
 
 # Output municipality-level regression data
 st_write(df2_scaled,
-         "data/calibration/hmc/gamma_data_site_78.geojson",
+         "data/calibration/gamma_fit_78.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE
 )
@@ -138,7 +138,7 @@ df3 <- calib_1043 %>%
 
 # Output municipality-level regression data
 st_write(df3,
-         "data/calibration/hmc/gamma_data_site_1043.geojson",
+         "data/calibration/hmc/gamma_fit_1043.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE
 )

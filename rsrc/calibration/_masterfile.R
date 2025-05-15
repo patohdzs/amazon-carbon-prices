@@ -27,13 +27,25 @@ source("rsrc/calibration/calibrate_78_sites_model.R", encoding = "UTF-8", echo =
 rm(list = ls())
 
 # Prepare gamma regression data for HMC
-source("rsrc/calibration/calibrate_gamma_reg.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/calibration/site_gamma_reg_1043.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())
 
 # Prepare theta regression data for HMC
-source("rsrc/calibration/calibrate_theta_reg.R", encoding = "UTF-8", echo = TRUE)
+source("rsrc/calibration/site_gamma_reg_78.R", encoding = "UTF-8", echo = TRUE)
+
+# Clear environment
+rm(list = ls())
+
+# Prepare theta regression data for HMC
+source("rsrc/calibration/gamma_data_scale.R", encoding = "UTF-8", echo = TRUE)
+
+# Clear environment
+rm(list = ls())
+
+# Prepare theta regression data for HMC
+source("rsrc/calibration/muni_theta_reg_distance.R", encoding = "UTF-8", echo = TRUE)
 
 # Clear environment
 rm(list = ls())
