@@ -203,7 +203,15 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
     theta_adjusted_b15 = b15["final_sample"][:16000, :num_sites]
     gamma_adjusted_b15 = b15["final_sample"][:16000, num_sites:]
 
-    for idx in range(num_sites):
+
+    # if xi == 1.0:
+    #     gamma_sites_to_plot = range(num_sites)
+    #     theta_sites_to_plot = range(num_sites)
+    # else:
+    gamma_sites_to_plot = [773, 871]  
+    theta_sites_to_plot = [983, 1033]  
+
+    for idx in gamma_sites_to_plot:
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
         
         sns.kdeplot(
@@ -226,8 +234,8 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        # plt.xlim(200,600)
-        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b0.png")
+        plt.xlim(380,540)
+        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b0_xi_{xi}.png")
         fig.savefig(file_name, format="png")
         plt.close()
         
@@ -257,12 +265,12 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        # plt.xlim(200,600)
-        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b15.png")
+        plt.xlim(500,660)
+        file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b15_xi_{xi}.png")
         fig.savefig(file_name, format="png")
         plt.close()
 
-    for idx in range(num_sites): 
+    for idx in theta_sites_to_plot:
         print("site",idx)
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
 
@@ -287,8 +295,8 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        # plt.xlim(0,6)
-        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b0.png")
+        plt.xlim(0,6)
+        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b0_xi_{xi}.png")
         fig.savefig(file_name, format="png")
         plt.close()
         
@@ -317,8 +325,8 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        # plt.xlim(0,6)
-        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b15.png")
+        plt.xlim(1,7)
+        file_name = os.path.join(output_folder, f"theta_distribution_{idx+1}_b15_xi_{xi}.png")
         fig.savefig(file_name, format="png")
         plt.close()
     return
@@ -442,6 +450,12 @@ def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215
         )
     
     for b, results in zip([15, 25], [results_15, results_25]):
+        
+        if b==15:
+            color = "blue"
+        elif b==25:
+            color = "red"
+        
         kappa = 2.094215255
         X = results.X
         Z = results.Z
@@ -454,7 +468,7 @@ def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215
         transfers = -b * (kappa * Z[1:] - X_dot).sum(axis=1)
 
         # Plotting transfers
-        plt.plot(transfers[:50], label=f"b=${b}")
+        plt.plot(transfers[:50], label=f"b=${b}",linewidth=4,color=color)
 
     # Adding legend
     plt.legend()
