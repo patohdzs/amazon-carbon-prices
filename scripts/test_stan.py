@@ -1,5 +1,5 @@
 import time
-
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from cmdstanpy import CmdStanModel
@@ -18,7 +18,7 @@ sampler = CmdStanModel(
 
 
 # Organize input data for Stan
-num_sites = 1043
+num_sites = 78
 data = dict(
     num_sites=num_sites,
     **load_gamma_calib(num_sites, "reg"),
@@ -71,6 +71,23 @@ sigma_v_gamma = fit.stan_variable("sigma_v_gamma")
 sigma_v_theta = fit.stan_variable("sigma_v_theta")
 
 
+percentiles_gamma = np.percentile(beta_gamma, [10, 50, 90], axis=0)
+percentiles_theta = np.percentile(beta_theta, [10, 50, 90], axis=0)
+gamma_quan_table = pd.DataFrame({
+    "10th_percentile": percentiles_gamma[0],
+    "50th_percentile": percentiles_gamma[1],
+    "90th_percentile": percentiles_gamma[2]
+})
+gamma_quan_table.to_csv(get_path("output", "tables") /"gamma_percentiles.csv", index=False)
+
+theta_quan_table = pd.DataFrame({
+    "10th_percentile": percentiles_theta[0],
+    "50th_percentile": percentiles_theta[1],
+    "90th_percentile": percentiles_theta[2]
+})
+theta_quan_table.to_csv(get_path("output", "tables") /"theta_percentiles.csv", index=False)
+
+
 df_beta_gamma = pd.DataFrame(
     beta_gamma, columns=[f"beta_gamma_{i}" for i in range(beta_gamma.shape[1])]
 )
@@ -108,45 +125,45 @@ df_all.to_csv(
 )
 
 
-plt.figure(figsize=(8, 5))
-plt.hist(fit.stan_variable("sigma_u_gamma"), bins=50)  # 30 bins, nice edges
-plt.xlabel("Value")
-plt.ylabel("Frequency")
-plt.title(r"Histogram of $\sigma_u$")
-# plt.grid(True)
-plt.tight_layout()
-plt.savefig(f"results/{num_sites}/histogram_sigma_u_gamma.png", dpi=300)
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.hist(fit.stan_variable("sigma_u_gamma"), bins=50)  # 30 bins, nice edges
+# plt.xlabel("Value")
+# plt.ylabel("Frequency")
+# plt.title(r"Histogram of $\sigma_u$")
+# # plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f"results/{num_sites}/histogram_sigma_u_gamma.png", dpi=300)
+# plt.show()
 
 
-plt.figure(figsize=(8, 5))
-plt.hist(fit.stan_variable("sigma_v_gamma"), bins=50)  # 30 bins, nice edges
-plt.xlabel("Value")
-plt.ylabel("Frequency")
-plt.title(r"Histogram of $\sigma_nu$")
-# plt.grid(True)
-plt.tight_layout()
-plt.savefig(f"results/{num_sites}/histogram_sigma_nu_gamma.png", dpi=300)
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.hist(fit.stan_variable("sigma_v_gamma"), bins=50)  # 30 bins, nice edges
+# plt.xlabel("Value")
+# plt.ylabel("Frequency")
+# plt.title(r"Histogram of $\sigma_nu$")
+# # plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f"results/{num_sites}/histogram_sigma_nu_gamma.png", dpi=300)
+# plt.show()
 
 
-plt.figure(figsize=(8, 5))
-plt.hist(1 / fit.stan_variable("sigma_u_gamma") ** 2, bins=50)  # 30 bins, nice edges
-plt.xlabel("Value")
-plt.ylabel("Frequency")
-plt.title(r"Histogram of $\eta$")
-# plt.grid(True)
-plt.tight_layout()
-plt.savefig(f"results/{num_sites}/histogram_eta_gamma.png", dpi=300)
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.hist(1 / fit.stan_variable("sigma_u_gamma") ** 2, bins=50)  # 30 bins, nice edges
+# plt.xlabel("Value")
+# plt.ylabel("Frequency")
+# plt.title(r"Histogram of $\eta$")
+# # plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f"results/{num_sites}/histogram_eta_gamma.png", dpi=300)
+# plt.show()
 
 
-plt.figure(figsize=(8, 5))
-plt.hist(1 / fit.stan_variable("sigma_v_gamma") ** 2, bins=50)  # 30 bins, nice edges
-plt.xlabel("Value")
-plt.ylabel("Frequency")
-plt.title(r"Histogram of $\zeta$")
-# plt.grid(True)
-plt.tight_layout()
-plt.savefig(f"results/{num_sites}/histogram_zeta_gamma.png", dpi=300)
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.hist(1 / fit.stan_variable("sigma_v_gamma") ** 2, bins=50)  # 30 bins, nice edges
+# plt.xlabel("Value")
+# plt.ylabel("Frequency")
+# plt.title(r"Histogram of $\zeta$")
+# # plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f"results/{num_sites}/histogram_zeta_gamma.png", dpi=300)
+# plt.show()

@@ -8,10 +8,13 @@ import argparse
 parser = argparse.ArgumentParser(description="shadow price calculation")
 parser.add_argument("--id",type=int,default=400)
 parser.add_argument("--xi",type=float,default=5)
+parser.add_argument("--sites",type=int,default=1043)
 args = parser.parse_args()
 seed = args.id
 seed_i = seed/10
 xi=args.xi
+num_sites=args.sites
+
 
 def shadow_price_opt(
     zbar_1995,
@@ -184,6 +187,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gurobi", model="det", xi=2, p
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
-min_result, hmc_1043_pe = shadow_price_cal(sitenum=1043, model="hmc", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
+min_result, hmc_1043_pe = shadow_price_cal(sitenum=num_sites, model="hmc", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
 print("min_result", min_result, "min_pe", hmc_1043_pe)
 
