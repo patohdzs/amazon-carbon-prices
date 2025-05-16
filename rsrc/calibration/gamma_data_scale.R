@@ -138,7 +138,7 @@ df3 <- calib_1043 %>%
 
 # Output municipality-level regression data
 st_write(df3,
-         "data/calibration/hmc/gamma_fit_1043.geojson",
+         "data/calibration/gamma_fit_1043.geojson",
          driver = "GeoJSON",
          delete_dsn = TRUE
 )
