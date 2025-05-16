@@ -104,7 +104,7 @@ def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="d
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
     plt.xlim(0, max(time) + 2)
-    plt.yticks([0, 5, 10, 15, 20, 25], ["0", "5", "10", "15", "20", "25"])
+    plt.yticks([0, 5, 10, 15, 20], ["0", "5", "10", "15", "20"])
     plt.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, -0.15),
