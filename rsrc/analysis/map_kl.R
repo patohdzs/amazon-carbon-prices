@@ -10,6 +10,7 @@
 # 1: -
 
 # SETUP
+library(scales)
 library(sf)
 library(ggplot2)
 library(readr)
@@ -160,22 +161,29 @@ circle_gamma_b15 <- prediction.1043SitesModel %>%
 
 
 # relative entropy b0
-plot_theta_b0 <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                    dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
-                    dplyr::mutate(theta_b0 = cut(theta_b0,
-                                            breaks = c(0, 0.1,1, 5, 10, 20, 34),
-                                            include.lowest = T,
-                                            dig.lab = 3,
-                                            labels = c("[0~ 0.1", " ~ 1", " ~ 5", " ~ 10", " ~ 20", " ~ 34]")
-                    ))) +
-  ggplot2::geom_sf(aes(fill = theta_b0)) +
-  ggplot2::scale_fill_manual(name = NULL, values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
-  ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
-  ggplot2::geom_point(data = circle_theta_b0, aes(x = x, y = y),
-                      color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
-  ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
-  ggplot2::theme(
+plot_theta_b0 <- prediction.1043SitesModel %>%
+  filter(time == 0, p_e == aux.prices[3]) %>%
+  arrange(theta_b0) %>%
+  mutate(
+    rank = row_number(),
+    bin = ntile(rank, 6)
+  ) %>%
+  group_by(bin) %>%
+  mutate(
+    bin_label = paste0(min(rank), "–", max(rank))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    bin_label = factor(bin_label, levels = unique(bin_label))  # ensure correct order
+  ) %>%
+  ggplot() +
+  geom_sf(aes(fill = bin_label)) +
+  scale_fill_brewer(name = NULL, palette = "YlOrRd", drop = FALSE) +
+  geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
+  geom_point(data = circle_theta_b0, aes(x = x, y = y),
+             color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
+  guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
+  theme(
     panel.grid.major = element_line(colour = "white"),
     panel.grid.minor = element_line(colour = "white"),
     panel.background = element_blank(),
@@ -183,29 +191,37 @@ plot_theta_b0 <-
     axis.line = element_blank(), axis.ticks = element_blank(),
     axis.title = element_blank(), axis.text = element_blank(),
     legend.title = element_text(hjust = 0.5, size = 40, face = "bold"),
-    legend.position = "bottom", legend.margin = margin(t = -1, r = -0, b = 0.3, l = -0, unit = "cm"),
+    legend.position = "bottom",
+    legend.margin = margin(t = -1, r = 0, b = 0.3, l = 0, unit = "cm"),
     legend.text = element_text(size = 50, face = "bold"),
-    plot.margin = unit(c(t = -0.5, r = -1, b = -0, l = -1), "cm")
+    plot.margin = unit(c(-0.5, -1, 0, -1), "cm")
   )
 
 
 
-plot_theta_b15 <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                    dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
-                    dplyr::mutate(theta_b15 = cut(theta_b15,
-                                            breaks = c(0,0.01, 0.05, 0.1, 0.3,0.5,0.705),
-                                            include.lowest = T,
-                                            dig.lab = 3,
-                                            labels = c("[0~ 0.01", " ~ 0.05", " ~ 0.1", " ~ 0.3", " ~ 0.5", " ~ 0.7]")
-                    ))) +
-  ggplot2::geom_sf(aes(fill = theta_b15)) +
-  ggplot2::scale_fill_manual(name = NULL, values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
-  ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
-  ggplot2::geom_point(data = circle_theta_b15, aes(x = x, y = y),
-                      color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
-  ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
-  ggplot2::theme(
+plot_theta_b15 <- prediction.1043SitesModel %>%
+  filter(time == 0, p_e == aux.prices[3]) %>%
+  arrange(theta_b15) %>%
+  mutate(
+    rank = row_number(),
+    bin = ntile(rank, 6)
+  ) %>%
+  group_by(bin) %>%
+  mutate(
+    bin_label = paste0(min(rank), "–", max(rank))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    bin_label = factor(bin_label, levels = unique(bin_label))  # preserve order
+  ) %>%
+  ggplot() +
+  geom_sf(aes(fill = bin_label)) +
+  scale_fill_brewer(name = NULL, palette = "YlOrRd", drop = FALSE) +
+  geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
+  geom_point(data = circle_theta_b15, aes(x = x, y = y),
+             color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
+  guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
+  theme(
     panel.grid.major = element_line(colour = "white"),
     panel.grid.minor = element_line(colour = "white"),
     panel.background = element_blank(),
@@ -213,29 +229,38 @@ plot_theta_b15 <-
     axis.line = element_blank(), axis.ticks = element_blank(),
     axis.title = element_blank(), axis.text = element_blank(),
     legend.title = element_text(hjust = 0.5, size = 40, face = "bold"),
-    legend.position = "bottom", legend.margin = margin(t = -1, r = -0, b = 0.3, l = -0, unit = "cm"),
+    legend.position = "bottom",
+    legend.margin = margin(t = -1, r = 0, b = 0.3, l = 0, unit = "cm"),
     legend.text = element_text(size = 50, face = "bold"),
-    plot.margin = unit(c(t = -0.5, r = -1, b = -0, l = -1), "cm")
+    plot.margin = unit(c(-0.5, -1, 0, -1), "cm")
   )
 
 
 
-plot_gamma_b0 <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                    dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
-                    dplyr::mutate(gamma_b0 = cut(gamma_b0,
-                                            breaks = c(0, 0.002,0.005, 0.01, 0.02, 0.025,0.03),
-                                            include.lowest = T,
-                                            dig.lab = 3,
-                                            labels = c("[0~ 0.002", " ~ 0.005", " ~ 0.01", " ~ 0.02", " ~ 0.025", " ~ 0.03]")
-                    ))) +
-  ggplot2::geom_sf(aes(fill = gamma_b0)) +
-  ggplot2::scale_fill_manual(name = NULL, values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
-  ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
-  ggplot2::geom_point(data = circle_gamma_b0, aes(x = x, y = y),
-                      color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
-  ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
-  ggplot2::theme(
+
+plot_gamma_b0 <- prediction.1043SitesModel %>%
+  filter(time == 0, p_e == aux.prices[3]) %>%
+  arrange(gamma_b0) %>%
+  mutate(
+    rank = row_number(),
+    bin = ntile(rank, 6)
+  ) %>%
+  group_by(bin) %>%
+  mutate(
+    bin_label = paste0(min(rank), "–", max(rank))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    bin_label = factor(bin_label, levels = unique(bin_label))
+  ) %>%
+  ggplot() +
+  geom_sf(aes(fill = bin_label)) +
+  scale_fill_brewer(name = NULL, palette = "YlOrRd", drop = FALSE) +
+  geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
+  geom_point(data = circle_gamma_b0, aes(x = x, y = y),
+             color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
+  guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
+  theme(
     panel.grid.major = element_line(colour = "white"),
     panel.grid.minor = element_line(colour = "white"),
     panel.background = element_blank(),
@@ -243,28 +268,35 @@ plot_gamma_b0 <-
     axis.line = element_blank(), axis.ticks = element_blank(),
     axis.title = element_blank(), axis.text = element_blank(),
     legend.title = element_text(hjust = 0.5, size = 40, face = "bold"),
-    legend.position = "bottom", legend.margin = margin(t = -1, r = -0, b = 0.3, l = -0, unit = "cm"),
+    legend.position = "bottom",
+    legend.margin = margin(t = -1, r = 0, b = 0.3, l = 0, unit = "cm"),
     legend.text = element_text(size = 50, face = "bold"),
-    plot.margin = unit(c(t = -0.5, r = -1, b = -0, l = -1), "cm")
+    plot.margin = unit(c(-0.5, -1, 0, -1), "cm")
   )
 
-
-plot_gamma_b15 <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>%
-                    dplyr::filter(time == 0, p_e == aux.prices[3]) %>%
-                    dplyr::mutate(gamma_b15 = cut(gamma_b15,
-                                            breaks = c(0, 0.05,0.1, 0.15, 0.2, 0.25, 0.3),
-                                            include.lowest = T,
-                                            dig.lab = 3,
-                                            labels = c("[0~ 0.05", " ~ 0.1", " ~ 0.15", " ~ 0.2", " ~ 0.25", " ~ 0.3]")
-                    ))) +
-  ggplot2::geom_sf(aes(fill = gamma_b15)) +
-  ggplot2::scale_fill_manual(name = NULL, values = c("white", RColorBrewer::brewer.pal(5, "YlOrRd")), drop = FALSE) +
-  ggplot2::geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
-  ggplot2::geom_point(data = circle_gamma_b15, aes(x = x, y = y),
-                      color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
-  ggplot2::guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
-  ggplot2::theme(
+plot_gamma_b15 <- prediction.1043SitesModel %>%
+  filter(time == 0, p_e == aux.prices[3]) %>%
+  arrange(gamma_b15) %>%
+  mutate(
+    rank = row_number(),
+    bin = ntile(rank, 6)
+  ) %>%
+  group_by(bin) %>%
+  mutate(
+    bin_label = paste0(min(rank), "–", max(rank))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    bin_label = factor(bin_label, levels = unique(bin_label))
+  ) %>%
+  ggplot() +
+  geom_sf(aes(fill = bin_label)) +
+  scale_fill_brewer(name = NULL, palette = "YlOrRd", drop = FALSE) +
+  geom_sf(data = amazon_biome, fill = NA, color = "darkgreen", size = 1.2) +
+  geom_point(data = circle_gamma_b15, aes(x = x, y = y),
+             color = "blue", size = 30, shape = 21, fill = NA, stroke = 4) +
+  guides(fill = guide_legend(label.position = "bottom", title.position = "top", nrow = 1)) +
+  theme(
     panel.grid.major = element_line(colour = "white"),
     panel.grid.minor = element_line(colour = "white"),
     panel.background = element_blank(),
@@ -272,11 +304,11 @@ plot_gamma_b15 <-
     axis.line = element_blank(), axis.ticks = element_blank(),
     axis.title = element_blank(), axis.text = element_blank(),
     legend.title = element_text(hjust = 0.5, size = 40, face = "bold"),
-    legend.position = "bottom", legend.margin = margin(t = -1, r = -0, b = 0.3, l = -0, unit = "cm"),
+    legend.position = "bottom",
+    legend.margin = margin(t = -1, r = 0, b = 0.3, l = 0, unit = "cm"),
     legend.text = element_text(size = 50, face = "bold"),
-    plot.margin = unit(c(t = -0.5, r = -1, b = -0, l = -1), "cm")
+    plot.margin = unit(c(-0.5, -1, 0, -1), "cm")
   )
-
 
 
 
@@ -285,28 +317,28 @@ dir.create(here::here("plots/1043-hmc"), recursive = TRUE, showWarnings = FALSE)
 
 ggpubr::ggexport(
   plot = plot_theta_b0,   
-  filename = here::here(glue::glue("plots/1043-hmc/re_theta_b0.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_theta_b0.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_theta_b15,   
-  filename = here::here(glue::glue("plots/1043-hmc/re_theta_b15.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_theta_b15.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_gamma_b0,   
-  filename = here::here(glue::glue("plots/1043-hmc/re_gamma_b0.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_gamma_b0.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_gamma_b15,   
-  filename = here::here(glue::glue("plots/1043-hmc/re_gamma_b15.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_gamma_b15.png")),  
   width = 2400,   
   height = 1500   
 )
