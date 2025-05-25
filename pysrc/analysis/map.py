@@ -55,32 +55,35 @@ def spatial_allocation(solver='gams',
     indicator_det[np.abs(z_det[:,49]-z_det[:,0])<0.05*z_det[:,0]]=2
 
     positions_hmc = []
-
     for i in range(hmc_max.shape[0]):
+        if indicator_hmc[i] == 2:
+            positions_hmc.append(111)
+            continue
         series = hmc_max[i, :50]
         found = False  
-        for j in range(0, len(series)):
-            if series[j] ==np.max(series) and series[j]>1e-4:
-                positions_hmc.append(j+1)
+        for j in range(len(series)):
+            if series[j] == np.max(series) and series[j] > 1e-4:
+                positions_hmc.append(j + 1)
                 found = True
-                break  
-        
-        if not found:  
+                break
+        if not found:
             positions_hmc.append(111)
-            
-    positions_det = []
 
+    positions_det = []
     for i in range(det_max.shape[0]):
+        if indicator_det[i] == 2:
+            positions_det.append(111)
+            continue
         series = det_max[i, :50]
         found = False 
-        for j in range(0, len(series)):
-            if series[j] ==np.max(series) and series[j]>1e-4:
-
-                positions_det.append((j+1))
+        for j in range(len(series)):
+            if series[j] == np.max(series) and series[j] > 1e-4:
+                positions_det.append(j + 1)
                 found = True
-                break  
-        if not found:  
+                break
+        if not found:
             positions_det.append(111)
+
 
 
     positions_hmc_array= np.array(positions_hmc)
@@ -95,11 +98,9 @@ def spatial_allocation(solver='gams',
 
 
 
-    if b==0:
-        bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
-    elif b==15:
-        bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
-        
+
+    bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
+
         
     plt.figure(figsize=(8, 6))
     plt.hist(positions_hmc_array[positions_hmc_array != 111],  bins=bin_edges, color='red', alpha=0.6,label='ambiguity averse')

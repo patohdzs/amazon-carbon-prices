@@ -48,7 +48,7 @@ def mc_samples(location,p_low,p_high,price_low=35.76,price_high=44.32):
             current_state = next_state
 
         transformed_markov_chain = [
-            1 if price == 35.76 else 2 for price in markov_chain
+            1 if price == price_low else 2 for price in markov_chain
         ]
 
         # Creating an index from 1 to 200
@@ -174,34 +174,34 @@ if type == "shadow_price":
 if type =="converge_uncon":
 
 
-    xi_values = [0.2,1.0]
+    xi_values = [1.0,0.5]
     b_values = [0, 10, 15, 20, 25]
 
 
     prob_dict = {
-        1: {
-            "b0": {"prob_ll": 0.96, "prob_hh": 0.45},
-            "b10": {"prob_ll": 0.82, "prob_hh": 0.73},
-            "b15": {"prob_ll": 0.76, "prob_hh": 0.79},
-            "b20": {"prob_ll": 0.74, "prob_hh": 0.81},
-            "b25": {"prob_ll": 0.74, "prob_hh": 0.81},
+        0.5: {
+            "b0": {"prob_ll": 0.977, "prob_hh": 1-0.793},
+            "b10": {"prob_ll":0.778, "prob_hh": 1-0.235},
+            "b15": {"prob_ll": 0.736, "prob_hh": 1-0.196},
+            "b20": {"prob_ll": 0.719, "prob_hh": 1-0.183},
+            "b25": {"prob_ll": 0.715, "prob_hh": 1-0.180},
         },
-        0.2: {
-            "b0": {"prob_ll": 0.99, "prob_hh": 0.25},
-            "b10": {"prob_ll": 0.95, "prob_hh": 0.47},
-            "b15": {"prob_ll": 0.91, "prob_hh": 0.59},
-            "b20": {"prob_ll": 0.85, "prob_hh": 0.68},
-            "b25": {"prob_ll": 0.83, "prob_hh": 0.72},
+        1.0: {
+            "b0": {"prob_ll": 0.904, "prob_hh": 1-0.453},
+            "b10": {"prob_ll": 0.742, "prob_hh": 1-0.201},
+            "b15": {"prob_ll": 0.721, "prob_hh": 1-0.184},
+            "b20": {"prob_ll": 0.713, "prob_hh": 1-0.178},
+            "b25": {"prob_ll":  0.711, "prob_hh": 1-0.176},
         }
     }
 
 
     for xi in xi_values:
         for b in b_values:
-            if xi==1.0:
+            if xi==0.5:
                 pee=5.7
-            elif xi==0.2:
-                pee=5.5
+            elif xi==1.0:
+                pee=6.0
             pe = pee +b
             # Get the probability values for the current b value
             p_low = prob_dict[xi][f"b{b}"]["prob_ll"]
@@ -236,24 +236,24 @@ if type =="converge_uncon":
 if type =="converge_con":
 
 
-    xi_values = [0.2,1.0]
+    xi_values = [0.5,1.0]
     b_values = [0, 10, 15, 20, 25]
 
 
     prob_dict = {
         1: {
-            "b0": {"prob_ll": 0.97, "prob_hh": 0.41},
-            "b10": {"prob_ll": 0.83, "prob_hh": 0.72},
-            "b15": {"prob_ll": 0.77, "prob_hh": 0.78},
-            "b20": {"prob_ll": 0.75, "prob_hh": 0.80},
-            "b25": {"prob_ll": 0.74, "prob_hh": 0.81},
+            "b0": {"prob_ll": 0.942, "prob_hh": 1-0.181},
+            "b10": {"prob_ll": 0.795, "prob_hh": 1-0.049},
+            "b15": {"prob_ll": 0.774, "prob_hh": 1-0.043},
+            "b20": {"prob_ll": 0.768, "prob_hh": 1-0.042},
+            "b25": {"prob_ll": 0.766, "prob_hh": 1-0.042},
         },
-        0.2: {
-            "b0": {"prob_ll": 0.99, "prob_hh": 0.18},
-            "b10": {"prob_ll": 0.96, "prob_hh": 0.45},
-            "b15": {"prob_ll": 0.91, "prob_hh": 0.57},
-            "b20": {"prob_ll": 0.87, "prob_hh": 0.66},
-            "b25": {"prob_ll": 0.85, "prob_hh": 0.69},
+        0.5: {
+            "b0": {"prob_ll": 0.991, "prob_hh": 1-0.614},
+            "b10": {"prob_ll": 0.830, "prob_hh": 1-0.062},
+            "b15": {"prob_ll":  0.789, "prob_hh": 1-0.047},
+            "b20": {"prob_ll": 0.774, "prob_hh": 1-0.0439},
+            "b25": {"prob_ll": 0.770, "prob_hh": 1-0.0429},
         }
     }
 
@@ -261,9 +261,9 @@ if type =="converge_con":
     for xi in xi_values:
         for b in b_values:
             if xi==1:
-                pee=5.1
-            elif xi==0.2:
-                pee=5.0
+                pee=5.7
+            elif xi==0.5:
+                pee=5.2
             pe = pee +b
             # Get the probability values for the current b value
             p_low = prob_dict[xi][f"b{b}"]["prob_ll"]

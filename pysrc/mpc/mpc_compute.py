@@ -42,7 +42,7 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
         os.makedirs(output_folder)
 
     results = []
-    for j in range(49):
+    for j in range(29):
         
         
         if mode =="converge":
@@ -65,14 +65,14 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
         if mode =="converge":
             result_directory = (
                 str(get_path("output"))
-                + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
+                + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
                 + f"pe_{pe}/mc_{j+1}/{model}"
             )            
             
         else:
             result_directory = (
                 str(get_path("output"))
-                + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
+                + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
                 + f"pe_{pe}/mc_{j+1}/{model}"
             )
 
@@ -161,30 +161,29 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
     return print("done")
 
 
-# for b in [0,10,15,25]:
-#     value_decom_mpc(pee=5.5,num_sites=78,b=b,xi=0.2)
+
     
 # for b in [0,10,15,25]:
 #     value_decom_mpc(pee=6.3,num_sites=78,b=b,xi=10000.0)
     
 # for b in [0,10,15,25]:
-#     value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge")
+#     value_decom_mpc(pee=6.0,num_sites=78,b=b,xi=1.0,mode="converge")
     
 # for b in [0,10,15,25]:
-#     value_decom_mpc(pee=5.5,num_sites=78,b=b,xi=0.2,mode="converge")
+#     value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=0.5,mode="converge")
 
 
 
-######### Appendix tables
+######## Appendix tables
 
 # for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=5.9,num_sites=78,b=b,xi=10000.0,model="constrained",price_low=32.49,price_high = 42.85)
+#     value_decom_mpc(pee=6.0,num_sites=78,b=b,xi=10000.0,model="constrained",price_low=32.49,price_high = 42.85)
     
 # for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=5.1,num_sites=78,b=b,xi=1.0,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
+#     value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
     
 # for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=5.0,num_sites=78,b=b,xi=0.2,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
+#     value_decom_mpc(pee=5.2,num_sites=78,b=b,xi=0.5,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
     
     
     
@@ -194,113 +193,120 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
     
     
     
-def transfer_cost_mpc(pee=5.9, y=30,num_sites=78, solver="gurobi", model="unconstrained", b=0,xi=10000,mode=None,price_low=35.76,price_high = 44.25):
-    kappa = 2.094215255
-    pe = pee + b
+# def transfer_cost_mpc(pee=5.9, y=30,num_sites=78, solver="gurobi", model="unconstrained", b=0,xi=10000,mode=None,price_low=35.76,price_high = 44.25):
+#     kappa = 2.094215255
+#     pe = pee + b
 
-    output_folder = str(get_path("output")) + "/mpc/"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+#     output_folder = str(get_path("output")) + "/mpc/"
+#     if not os.path.exists(output_folder):
+#         os.makedirs(output_folder)
 
-    results = []
-    for j in range(49):
+#     results = []
+#     for j in range(49):
         
-        if mode =="converge":
-            result_directory = (
-                str(get_path("output"))
-                + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
-                + f"pe_{pe}/mc_{j+1}/{model}"
-            )            
-            baseline_folder = (
-                str(get_path("output"))
-                + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
-                + f"pe_{pee}/mc_{j+1}/{model}"
-            )            
-        else:
-            result_directory = (
-                str(get_path("output"))
-                + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
-                + f"pe_{pe}/mc_{j+1}/{model}"
-            )
-            baseline_folder = (
-                str(get_path("output"))
-                + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.11/"
-                + f"pe_{pee}/mc_{j+1}/{model}"
-            )
+#         if mode =="converge":
+#             result_directory = (
+#                 str(get_path("output"))
+#                 + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
+#                 + f"pe_{pe}/mc_{j+1}/{model}"
+#             )            
+#             baseline_folder = (
+#                 str(get_path("output"))
+#                 + f"/optimization/mpc_worstcase/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
+#                 + f"pe_{pee}/mc_{j+1}/{model}"
+#             )            
+#         else:
+#             result_directory = (
+#                 str(get_path("output"))
+#                 + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
+#                 + f"pe_{pe}/mc_{j+1}/{model}"
+#             )
+#             baseline_folder = (
+#                 str(get_path("output"))
+#                 + f"/optimization/mpc/{solver}/{num_sites}sites/xi_{xi}/pa_41.1/"
+#                 + f"pe_{pee}/mc_{j+1}/{model}"
+#             )
 
-        (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(baseline_folder)
+#         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(baseline_folder)
 
-        results_NCE_base = []
-        for i in range(y):
-            result_NCE_base = -kappa * np.sum(dfz_np[i + 1]) + dfxdot[i]
-            results_NCE_base.append(result_NCE_base)
-        total_NCE_base = np.sum(results_NCE_base) * 100
+#         results_NCE_base = []
+#         for i in range(y):
+#             result_NCE_base = -kappa * np.sum(dfz_np[i + 1]) + dfxdot[i]
+#             results_NCE_base.append(result_NCE_base)
+#         total_NCE_base = np.sum(results_NCE_base) * 100
 
-        (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(
-            result_directory
-        )
+#         (dfz_np, dfxdot, dfu_np, dfv_np) = read_file(
+#             result_directory
+#         )
     
 
-        results_NCE = []
-        for i in range(y):
-            result_NCE = -kappa * np.sum(dfz_np[i + 1]) + dfxdot[i]
-            results_NCE.append(result_NCE)
-        total_NCE = np.sum(results_NCE) * 100
+#         results_NCE = []
+#         for i in range(y):
+#             result_NCE = -kappa * np.sum(dfz_np[i + 1]) + dfxdot[i]
+#             results_NCE.append(result_NCE)
+#         total_NCE = np.sum(results_NCE) * 100
 
-        results_NT2 = []
-        for i in range(y):
-            result_NT2 = (
-                -b
-                * (kappa * np.sum(dfz_np[i + 1]) - dfxdot[i])
-                / ((1 + 0.02) ** (i))
-            )
+#         results_NT2 = []
+#         for i in range(y):
+#             result_NT2 = (
+#                 -b
+#                 * (kappa * np.sum(dfz_np[i + 1]) - dfxdot[i])
+#                 / ((1 + 0.02) ** (i))
+#             )
 
-            results_NT2.append(result_NT2)
-        total_NT2 = np.sum(results_NT2)
+#             results_NT2.append(result_NT2)
+#         total_NT2 = np.sum(results_NT2)
 
-        total_EC = total_NT2 / (total_NCE - total_NCE_base) * 100
+#         total_EC = total_NT2 / (total_NCE - total_NCE_base) * 100
 
-        iteration_results = {
-            "j": j + 1,
-            "b": b,
-            "NCE": total_NCE,
-            "NT2": total_NT2,
-            "EC": total_EC,
-        }
+#         iteration_results = {
+#             "j": j + 1,
+#             "b": b,
+#             "NCE": total_NCE,
+#             "NT2": total_NT2,
+#             "EC": total_EC,
+#         }
 
-        results.append(iteration_results)
+#         results.append(iteration_results)
 
-    results_df = pd.DataFrame(results)
+#     results_df = pd.DataFrame(results)
 
-    mean = results_df.mean()
-    sd = results_df.std()
-    sd / mean
+#     mean = results_df.mean()
+#     sd = results_df.std()
+#     sd / mean
 
-    summary_table_df = pd.DataFrame(
-        {
-            "  ":  f"b = {b}",
-            "net captured emissions": [format_float(mean["NCE"])],
-            "discounted net transfers": [format_float(mean["NT2"])],
-            "discounted effective costs": [format_float(mean["EC"])],
-        }
-    )
-
-
-    if mode =="converge":
-        with open(output_folder + f"converge_transfer_mpc_b{b}_sites{num_sites}_xi_{xi}_pee_{pee}_{model}.tex", "w") as file:
-            file.write(summary_table_df.to_latex(index=False))
-    else:
-        with open(output_folder + f"transfer_mpc_b{b}_sites{num_sites}_xi_{xi}_pee_{pee}_{model}.tex", "w") as file:
-            file.write(summary_table_df.to_latex(index=False))
-
-    return print("done")
+#     summary_table_df = pd.DataFrame(
+#         {
+#             "  ":  f"b = {b}",
+#             "net captured emissions": [format_float(mean["NCE"])],
+#             "discounted net transfers": [format_float(mean["NT2"])],
+#             "discounted effective costs": [format_float(mean["EC"])],
+#         }
+#     )
 
 
-for b in [0,10,15,25]:
-    transfer_cost_mpc(pee=6.3,num_sites=78,b=b,xi=10000.0)
+#     if mode =="converge":
+#         with open(output_folder + f"converge_transfer_mpc_b{b}_sites{num_sites}_xi_{xi}_pee_{pee}_{model}.tex", "w") as file:
+#             file.write(summary_table_df.to_latex(index=False))
+#     else:
+#         with open(output_folder + f"transfer_mpc_b{b}_sites{num_sites}_xi_{xi}_pee_{pee}_{model}.tex", "w") as file:
+#             file.write(summary_table_df.to_latex(index=False))
+
+#     return print("done")
+
+
+# for b in [0,10,15,25]:
+#     transfer_cost_mpc(pee=6.3,num_sites=78,b=b,xi=10000.0)
     
-for b in [0,10,15,25]:
-    transfer_cost_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge")
+# for b in [0,10,15,25]:
+#     transfer_cost_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge")
     
-for b in [0,10,15,25]:
-    transfer_cost_mpc(pee=5.5,num_sites=78,b=b,xi=0.2,mode="converge")
+# for b in [0,10,15,25]:
+#     transfer_cost_mpc(pee=5.5,num_sites=78,b=b,xi=0.2,mode="converge")
+
+
+
+
+
+
+

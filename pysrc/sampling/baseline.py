@@ -7,6 +7,13 @@ from cmdstanpy import CmdStanModel
 from pysrc.services.data_service import load_gamma_calib, load_theta_calib
 from pysrc.services.file_service import get_path
 
+import argparse
+parser = argparse.ArgumentParser(description="baseline sampling")
+parser.add_argument("--sites",type=int,default=1043)
+args = parser.parse_args()
+num_sites=args.sites
+
+
 output_dir = get_path("data", "calibration")
 
 # Compile Stan code
@@ -18,7 +25,7 @@ sampler = CmdStanModel(
 
 
 # Organize input data for Stan
-num_sites = 78
+
 data = dict(
     num_sites=num_sites,
     **load_gamma_calib(num_sites, "reg"),
@@ -73,6 +80,11 @@ sigma_v_theta = fit.stan_variable("sigma_v_theta")
 
 percentiles_gamma = np.percentile(beta_gamma, [10, 50, 90], axis=0)
 percentiles_theta = np.percentile(beta_theta, [10, 50, 90], axis=0)
+percentiles_gamma_sigma_u = np.percentile(sigma_u_gamma, [10, 50, 90], axis=0)
+percentiles_theta_sigma_u = np.percentile(sigma_u_theta, [10, 50, 90], axis=0)
+percentiles_gamma_sigma_v = np.percentile(sigma_v_gamma, [10, 50, 90], axis=0)
+percentiles_theta_sigma_v = np.percentile(sigma_v_theta, [10, 50, 90], axis=0)
+
 gamma_quan_table = pd.DataFrame({
     "10th_percentile": percentiles_gamma[0],
     "50th_percentile": percentiles_gamma[1],
@@ -86,6 +98,27 @@ theta_quan_table = pd.DataFrame({
     "90th_percentile": percentiles_theta[2]
 })
 theta_quan_table.to_csv(get_path("output", "tables") /"theta_percentiles.csv", index=False)
+
+
+sigma_quan_table = pd.DataFrame({
+    "gamma_sigma_u_10th": [percentiles_gamma_sigma_u[0]],
+    "gamma_sigma_v_10th": [percentiles_gamma_sigma_v[0]],
+    "theta_sigma_u_10th": [percentiles_theta_sigma_u[0]],
+    "theta_sigma_v_10th": [percentiles_theta_sigma_v[0]],
+    
+    "gamma_sigma_u_50th": [percentiles_gamma_sigma_u[1]],
+    "gamma_sigma_v_50th": [percentiles_gamma_sigma_v[1]],
+    "theta_sigma_u_50th": [percentiles_theta_sigma_u[1]],
+    "theta_sigma_v_50th": [percentiles_theta_sigma_v[1]],
+    
+    "gamma_sigma_u_90th": [percentiles_gamma_sigma_u[2]],
+    "gamma_sigma_v_90th": [percentiles_gamma_sigma_v[2]],
+    "theta_sigma_u_90th": [percentiles_theta_sigma_u[2]],
+    "theta_sigma_v_90th": [percentiles_theta_sigma_v[2]],
+})
+
+sigma_quan_table.to_csv(get_path("output", "tables") /"sigma_percentiles.csv", index=False)
+
 
 
 df_beta_gamma = pd.DataFrame(

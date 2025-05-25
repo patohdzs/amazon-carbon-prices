@@ -3,7 +3,9 @@ import time
 from dataclasses import dataclass
 import pandas as pd
 import numpy as np
+from scipy.special import logsumexp
 import pyomo.environ as pyo
+from pyomo.environ import value
 import dill as pickle 
 from cmdstanpy import CmdStanModel
 import os
@@ -57,25 +59,27 @@ def mpc_solve_planner_problem(
     final_sample_size=5_000,
     forest_area_2017=None,
     weight=0.5,
-    low_smart_guess_p_ll=None,
+    low_smart_guess=None,
+    high_smart_guess=None,
     mode=None,
+    type=None,
 ):
-    pickle_file = 'stan_model/mpc_compiled_model.pkl'
+    # pickle_file = 'stan_model/mpc_compiled_model.pkl'
 
-    if os.path.exists(pickle_file):
-        # Load the model from the pickle file
-        sampler = pickle.load(open(pickle_file, 'rb'))
-        print("Loaded model from pickle.")
-    else:
-        # Compile the Stan model and save it to the pickle file
-        sampler = CmdStanModel(
-            stan_file=get_path("stan_model") / "mpc_adjusted.stan",
-            cpp_options={"STAN_THREADS": "true"},
-            force_compile=True,
-        )
-        with open(pickle_file, 'wb') as f:
-            pickle.dump(sampler, f)
-        print("Compiled model and saved to pickle.")
+    # if os.path.exists(pickle_file):
+    #     # Load the model from the pickle file
+    #     sampler = pickle.load(open(pickle_file, 'rb'))
+    #     print("Loaded model from pickle.")
+    # else:
+    #     # Compile the Stan model and save it to the pickle file
+    #     sampler = CmdStanModel(
+    #         stan_file=get_path("stan_model") / "mpc_adjusted.stan",
+    #         cpp_options={"STAN_THREADS": "true"},
+    #         force_compile=True,
+    #     )
+    #     with open(pickle_file, 'wb') as f:
+    #         pickle.dump(sampler, f)
+    #     print("Compiled model and saved to pickle.")
     
     output_base_path = os.path.join(
         str(get_path("output")),
@@ -132,7 +136,7 @@ def mpc_solve_planner_problem(
             else:
                 return price_high
     model.pa = Param(model.T, model.J, mutable=True, initialize=initialize_pa)    
-    model.prob = Param(model.J, initialize=0, mutable=True) 
+    # model.prob = Param(model.J, initialize=0, mutable=True) 
     
 
     dep = [
@@ -154,9 +158,17 @@ def mpc_solve_planner_problem(
     model.dt = Param(initialize=dt)
     
     
-    model.p_ll = Param(initialize=prob_ll, mutable=True)
-    model.p_hh = Param(initialize=prob_hh, mutable=True)
-
+    # model.p_ll = Param(initialize=prob_ll, mutable=True)
+    # model.p_hh = Param(initialize=prob_hh, mutable=True)
+    
+    model.p_C0_1 = Param(initialize=prob_ll, mutable=True)
+    model.p_C1_1 = Param(initialize=prob_ll, mutable=True)
+    model.p_C1_2 = Param(initialize=prob_ll, mutable=True)
+    model.p_C2_1 = Param(initialize=prob_ll, mutable=True)
+    model.p_C2_2 = Param(initialize=prob_ll, mutable=True)
+    model.p_C2_3 = Param(initialize=prob_ll, mutable=True)
+    model.p_C2_4 = Param(initialize=prob_ll, mutable=True)
+    
     # Variables
     model.x = Var(model.T, model.S, model.J)
     model.z = Var(model.T, model.S, model.J, within=NonNegativeReals)
@@ -213,7 +225,7 @@ def mpc_solve_planner_problem(
     X.append(np.array([model.x0[r] for r in model.S]))
 
 
-    if price_low == 32.44:
+    if type == "constrained":
         file_path = (
             get_path("output", "simulation", "mpc_path","baseline","constrained") / f"mc_{id}.csv"
         ) 
@@ -226,7 +238,7 @@ def mpc_solve_planner_problem(
 
 
     if mode =="converge":
-        if price_low == 32.44:
+        if type == "constrained":
             file_path = (
                 get_path("output", "simulation", "mpc_path","constrained",f"xi_{xi}",f"pe_{price_emissions}") / f"mc_{id}.csv"
             ) 
@@ -243,9 +255,7 @@ def mpc_solve_planner_problem(
     pa_list = np.array(pd.read_csv(file_path))[:,1]
 
 
-    collected_ensembles = {}
-    uncertain_vals_old = np.array([prob_ll, prob_hh]).copy()
-    uncertain_vals = np.array([prob_ll, prob_hh]).copy()
+
     results = dict(
         tol=tol,
         T=model.T,
@@ -254,12 +264,14 @@ def mpc_solve_planner_problem(
         kappa=kappa,
         pf=price_emissions,
         xi=xi,
-        final_sample_size=final_sample_size,
     )
 
     iteration_period=time_horizon
     if mode=="sp":
         iteration_period=21
+        
+        
+        
     for Q in range(iteration_period):
     # for Q in range(1):
         
@@ -294,60 +306,58 @@ def mpc_solve_planner_problem(
         uncertain_vals_tracker = []
         pct_error_tracker = []
         
-        ## initialization
+        # initialization
+        
+        
+        model.p_C1_1.value = prob_ll
+        model.p_C1_2.value = 1-prob_hh
+        model.p_C2_1.value = prob_ll
+        model.p_C2_2.value = 1-prob_hh
+        model.p_C2_3.value = prob_ll
+        model.p_C2_4.value = 1-prob_hh
+        if model.pa_current.value == 1:
+            model.p_C0_1.value = prob_ll
+        if model.pa_current.value == 2:
+            model.p_C0_1.value = 1-prob_hh
+        
+        
+        model.p_C0_1_ori = model.p_C0_1.value
+        model.p_C1_1_ori = model.p_C1_1.value
+        model.p_C1_2_ori = model.p_C1_2.value
+        model.p_C2_1_ori = model.p_C2_1.value
+        model.p_C2_2_ori = model.p_C2_2.value
+        model.p_C2_3_ori = model.p_C2_3.value
+        model.p_C2_4_ori = model.p_C2_4.value
+        
+        
         if Q>0 :
-            if model.pa_current.value == 1:
-                if low_smart_guess_p_ll == None:
-                    model.p_ll = prob_ll
-                    model.p_hh = prob_hh
-                else:
-                    model.p_ll = low_smart_guess_p_ll      
-                    model.p_hh = low_smart_guess_p_hh  
-            if model.pa_current.value == 2:
-                model.p_ll = high_smart_guess_p_ll      
-                model.p_hh = high_smart_guess_p_hh  
-            uncertain_vals_old = np.array([model.p_ll.value, model.p_hh.value]).copy()
+            if model.pa_current.value == 1 and low_smart_guess is not None:
+
+                (model.p_C0_1.value,model.p_C1_1.value,model.p_C1_2.value,model.p_C2_1.value,model.p_C2_2.value,model.p_C2_3.value,model.p_C2_4.value) = low_smart_guess
+
+            if model.pa_current.value == 2 and high_smart_guess is not None:
+
+                (model.p_C0_1.value,model.p_C1_1.value,model.p_C1_2.value,model.p_C2_1.value,model.p_C2_2.value,model.p_C2_3.value,model.p_C2_4.value) = high_smart_guess
+
+
+
+
+            
+        uncertain_vals_old = np.array([ model.p_C0_1.value, model.p_C1_1.value,model.p_C1_2.value,model.p_C2_1.value,model.p_C2_2.value,model.p_C2_3.value,model.p_C2_4.value]).copy()
+        uncertain_vals =  np.array([ model.p_C0_1.value, model.p_C1_1.value,model.p_C1_2.value,model.p_C2_1.value,model.p_C2_2.value,model.p_C2_3.value,model.p_C2_4.value]).copy()
+
+        
         
         while cntr < max_iter and pct_error > tol:            
             print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
             
             
-            if cntr>0:
-                model.p_ll = uncertain_vals[0]
-                model.p_hh = uncertain_vals[1]
-            
-            # Calculate the probabilities based on `pa_current`
-            if model.pa_current.value == 1:
-                prob = {
-                    1: model.p_ll**3,
-                    2: model.p_ll**2 * (1 - model.p_ll),
-                    3: model.p_ll * (1 - model.p_ll) * (1 - model.p_hh),
-                    4: model.p_ll * (1 - model.p_ll) * model.p_hh,
-                    5: (1 - model.p_ll) * (1 - model.p_hh) * model.p_ll,
-                    6: (1 - model.p_ll) * (1 - model.p_hh) * (1 - model.p_ll),
-                    7: (1 - model.p_ll) * model.p_hh * (1 - model.p_hh),
-                    8: (1 - model.p_ll) * model.p_hh * model.p_hh,
-                }
-            elif model.pa_current.value == 2:
-                prob = {
-                    1: (1 - model.p_hh) * model.p_ll**2,
-                    2: (1 - model.p_hh) * model.p_ll * (1 - model.p_ll),
-                    3: (1 - model.p_hh) * (1 - model.p_ll) * (1 - model.p_hh),
-                    4: (1 - model.p_hh) * (1 - model.p_ll) * model.p_hh,
-                    5: model.p_hh * (1 - model.p_hh) * model.p_ll,
-                    6: model.p_hh * (1 - model.p_hh) * (1 - model.p_ll),
-                    7: model.p_hh * model.p_hh * (1 - model.p_hh),
-                    8: model.p_hh * model.p_hh * model.p_hh,
-                }
-
-            # print("prob_Test", prob)
-            # print(f"Sum of probabilities = {sum(prob.values())}")
-
-            for j in model.J:
-                model.prob[j] = prob[j] 
-                        
+            # if cntr>0:
+            #     model.p_ll = uncertain_vals[0]
+            #     model.p_hh = uncertain_vals[1]
             
 
+            
             # Solve the model
             opt = SolverFactory(solver)
             print("Solving the optimization problem...")
@@ -360,75 +370,37 @@ def mpc_solve_planner_problem(
 
             print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
             
-            Z_temp = np.array([[[model.z[t, r, j].value for t in model.T] for r in model.S] for j in model.J])  # Shape: (J, S, T + 1)
-            X_temp = np.array([[[model.x[t, r, j].value for t in model.T] for r in model.S] for j in model.J])
-            U_temp = np.array([[[model.u[t, r, j].value for t in model.T] for r in model.S] for j in model.J])[:, :, :-1]  # Shape: (J, S, T)
-            V_temp = np.array([[[model.v[t, r, j].value for t in model.T] for r in model.S] for j in model.J])[:, :, :-1]  # Shape: (J, S, T)
+            g_0_1, g_1_1, g_1_2, g_2_1, g_2_2, g_2_3, g_2_4=adjust(model,T=time_horizon,S=gamma.size,J=sto_horizon)
+            # solved_obj_val = value(model.obj)
+            # print(f"Objective value: {solved_obj_val}")
+            # print("adjustment value:",object_value_C_t0)
+            print("g_0_1:",g_0_1)
+            print("g_1_1:",g_1_1)
+            print("g_1_2:",g_1_2)
+            print("g_2_1:",g_2_1)
+            print("g_2_2:",g_2_2)
+            print("g_2_3:",g_2_3)
+            print("g_2_4:",g_2_4)
 
+            model.p_C0_1.value = min(g_0_1*model.p_C0_1_ori,0.999)
+            model.p_C1_1.value = min(g_1_1*model.p_C1_1_ori,0.999)
+            model.p_C1_2.value = min(g_1_2*model.p_C1_2_ori,0.999)
+            model.p_C2_1.value = min(g_2_1*model.p_C2_1_ori,0.999)
+            model.p_C2_2.value = min(g_2_2*model.p_C2_2_ori,0.999)
+            model.p_C2_3.value = min(g_2_3*model.p_C2_3_ori,0.999)
+            model.p_C2_4.value = min(g_2_4*model.p_C2_4_ori,0.999)
 
-            # HMC sampling
-            print("Starting HMC sampling...\n")
-            model_data = dict(
-                T=time_horizon,
-                S=len(list(model.S)),
-                J=len(list(model.J)),
-                alpha=alpha,
-                zbar_2017=zbar,
-                zeta_u=zeta_u,
-                zeta_v=zeta_v,
-                xi=xi,
-                kappa=kappa,
-                pa=np.array([[model.pa[t, j].value for j in model.J] for t in model.T]),
-                pe=price_emissions,
-                pa_current=model.pa_current.value,
-                Z=Z_temp,
-                U=U_temp,
-                V=V_temp,
-                X=X_temp,
-                gamma=gamma,
-                theta=theta,
-                **_dynamics_matrices(alpha, delta),
-            )
-
-            # Sampling from adjusted distribution
-            sampling_time = time.time()
-            fit = sampler.sample(
-                data=model_data,
-                iter_sampling=1000,
-                iter_warmup=500,
-                show_progress=True,
-                seed=123,
-                # show_console=True,
-            )
-            sampling_time = time.time() - sampling_time
-            print(f"Finished sampling! Elapsed Time: {sampling_time} seconds\n")
-            print(fit.diagnose())
-
-            p_ll_samples = fit.stan_variable("p_ll")[:,0].reshape(-1, 1)
-            p_hh_samples = fit.stan_variable("p_hh")[:,0].reshape(-1, 1)
-
-
-            uncertainty_adj_samples = np.concatenate(
-            (p_ll_samples, p_hh_samples), axis=1
-            )
-            
-            collected_ensembles.update({cntr: uncertainty_adj_samples.copy()})
+            uncertain_vals = np.array([model.p_C0_1.value, model.p_C1_1.value,model.p_C1_2.value,model.p_C2_1.value,model.p_C2_2.value,model.p_C2_3.value,model.p_C2_4.value]).copy()
 
             print(f"Parameters from last iteration: {uncertain_vals_old}\n")
             print(
                 f"""Parameters from current iteration:
-                {np.mean(uncertainty_adj_samples, axis=0)}\n"""
+                {uncertain_vals}\n"""
             )
 
-            # Compute exponentially-smoothened new params
-            uncertain_vals = (
-                weight * np.mean(uncertainty_adj_samples, axis=0)
-                + (1 - weight) * uncertain_vals_old
-            )
 
             uncertain_vals_tracker.append(uncertain_vals.copy())
-            print(f"Updated uncertain values: {uncertain_vals}\n")
-
+            
             pct_error = np.max(
                 np.abs(uncertain_vals_old - uncertain_vals) / uncertain_vals_old
             )
@@ -453,14 +425,9 @@ def mpc_solve_planner_problem(
                     "cntr": cntr,
                     "pct_error_tracker": np.asarray(pct_error_tracker),
                     "uncertain_vals_tracker": np.asarray(uncertain_vals_tracker),
-                    "collected_ensembles": collected_ensembles,
                 }
             )
             
-            if pct_error <= tol:
-                final_samples = uncertain_vals
-                results.update({"time_period": Q+1,
-                                "final_sample": final_samples})
 
         # if Q+1 in [1,20,40,60,80,100,120,140,160,180,200]:
         #     df = pd.DataFrame({
@@ -475,11 +442,10 @@ def mpc_solve_planner_problem(
 
 
         if model.pa_current.value == 2:
-            high_smart_guess_p_ll=uncertain_vals[0]
-            high_smart_guess_p_hh=uncertain_vals[1]
+            high_smart_guess=uncertain_vals
         if model.pa_current.value == 1:
-            low_smart_guess_p_ll=uncertain_vals[0]
-            low_smart_guess_p_hh=uncertain_vals[1]
+            low_smart_guess=uncertain_vals
+
 
 
         Z.append(np.array([model.z[2, r,1].value  for r in model.S]))
@@ -510,37 +476,6 @@ def vectorize_trajectories(traj: PlannerSolution):
         "U": U,
         "V": V,
     }
-
-
-def _planner_obj(model):
-    
-    
-
-    object_value = pyo.quicksum( model.prob[j]*
-            pyo.quicksum(
-                math.exp(-model.delta * (t * model.dt - model.dt))
-                * (
-                    -model.pe
-                    * pyo.quicksum(
-                        model.kappa * model.z[t + 1, s,j]
-                        - (model.x[t + 1, s,j] - model.x[t, s,j]) / model.dt
-                        for s in model.S
-                    )
-                    + model.pa[t,j]
-                    * pyo.quicksum(model.theta[s] * model.z[t + 1, s,j] for s in model.S)
-                    - (model.zeta_u / 2) * (model.w1[t,j] ** 2)
-                    - (model.zeta_v / 2) * (model.w2[t,j] ** 2)
-                )
-                * model.dt
-                for t in model.T
-                if t < max(model.T)
-            )
-        for j in model.J       
-    )
-    
-    
-    return object_value
-
 
 
 def _zdot_const(model, t, s,j):
@@ -601,18 +536,234 @@ def non_v_def_rule(model, t, j, j1, s):
 def non_w_def_rule(model, t, j, j1):
     return model.w1[t,j] == model.w1[ t,j1]
 
-def _dynamics_matrices( alpha, delta, T=200, dt=1):
-    # Create dynamics matrices
-    arr = np.cumsum(
-        np.triu(np.ones((T, T))),
-        axis=1,
-    ).T
-    Bdym = (1 - alpha) ** (arr - 1)
-    Bdym[Bdym > 1] = 0.0
-    Adym = np.arange(1, T + 1)
-    alpha_p_Adym = np.power(1 - alpha, Adym)
 
-    # Other placeholders!
-    ds_vect = np.exp(-delta * np.arange(T) * dt)
-    ds_vect = np.reshape(ds_vect, (ds_vect.size, 1)).flatten()
-    return {"alpha_p_Adym": alpha_p_Adym, "Bdym": Bdym, "ds_vect": ds_vect}
+
+
+
+
+
+
+
+
+
+
+
+def _planner_obj(model):
+    
+    def compute_flow(model, t, j):
+        return (
+            -model.pe
+            * pyo.quicksum(
+                model.kappa * model.z[t + 1, s, j]
+                - (model.x[t + 1, s, j] - model.x[t, s, j]) / model.dt
+                for s in model.S
+            )
+            + model.pa[t, j]
+            * pyo.quicksum(model.theta[s] * model.z[t + 1, s, j] for s in model.S)
+            - (model.zeta_u / 2) * (model.w1[t, j] ** 2)
+            - (model.zeta_v / 2) * (model.w2[t, j] ** 2)
+        )
+
+    
+    object_value_C_t3 = {
+        j: (1 - math.exp(-model.delta)) * pyo.quicksum(
+            math.exp(-model.delta * (t * model.dt - 4 * model.dt)) *
+            compute_flow(model, t, j) * model.dt
+            for t in model.T
+            if t < max(model.T) and t > 3
+        )
+        for j in model.J
+    }
+
+    
+    # Group states into state primes: {1, 2}, {3, 4}, {5, 6}, {7, 8}
+    state_C2_C3_mapping = {
+        1: [1, 2],
+        2: [1, 2],
+        3: [3, 4],
+        4: [3, 4],
+        5: [5, 6],
+        6: [5, 6],
+        7: [7, 8],
+        8: [7, 8],
+    }
+
+    state_C2_C3_prob = {
+        1: model.p_C2_1, 
+        2: 1-model.p_C2_1, 
+        3: model.p_C2_2,  
+        4: 1-model.p_C2_2,  
+        5: model.p_C2_3, 
+        6: 1-model.p_C2_3, 
+        7: model.p_C2_4,  
+        8: 1-model.p_C2_4,  
+    }
+
+
+    object_value_C_t2 = {
+        j: (1 - pyo.exp(-model.delta)) *  compute_flow(model, 3, j)
+        + pyo.exp(-model.delta) * pyo.quicksum(
+            state_C2_C3_prob[mapping] * object_value_C_t3[mapping]
+            for mapping in state_C2_C3_mapping[j]
+        )
+        for j in model.J
+    }
+
+
+    state_C1_C2_prob = {
+        1: model.p_C1_1,   
+        2: model.p_C1_1,   
+        3: 1-model.p_C1_1,  
+        4: 1-model.p_C1_1, 
+        5: model.p_C1_2,
+        6: model.p_C1_2,  
+        7: 1-model.p_C1_2,   
+        8: 1-model.p_C1_2,
+    }
+
+    object_value_C_t1_unique = {}
+
+    object_value_C_t1_unique[0] = (
+        (1 - pyo.exp(-model.delta)) *  compute_flow(model, 2, 1) 
+        + pyo.exp(-model.delta) *  pyo.quicksum(
+            state_C1_C2_prob[j] * object_value_C_t2[j]
+            for j in [1, 3]
+        )
+    )
+
+    object_value_C_t1_unique[1] = (
+        (1 - pyo.exp(-model.delta)) * compute_flow(model, 2, 5) 
+        + pyo.exp(-model.delta) *  pyo.quicksum(
+            state_C1_C2_prob[j] * object_value_C_t2[j]
+            for j in [5, 7]
+        )
+    )
+
+
+    object_value_C_t0 = (
+        (1 - pyo.exp(-model.delta)) *  compute_flow(model, 1, 1) 
+        + pyo.exp(-model.delta) * (
+            model.p_C0_1 * object_value_C_t1_unique[0]
+            + (1-model.p_C0_1) * object_value_C_t1_unique[1]
+        )
+    )
+
+
+
+    return object_value_C_t0
+
+
+
+
+def adjust(model,T,S,J):
+    
+
+    dt = model.dt.value
+    delta = model.delta.value
+    pe = model.pe.value
+    kappa = model.kappa.value
+    zeta_u = model.zeta_u.value
+    zeta_v = model.zeta_v.value
+    xi = model.xi.value
+    
+    z = np.array([[[model.z[t, r, j].value for t in model.T] for r in model.S] for j in model.J])  # Shape: (J, S, T + 1)
+    x = np.array([[[model.x[t, r, j].value for t in model.T] for r in model.S] for j in model.J])
+    pa = np.array([[model.pa[t, j].value for t in model.T] for j in model.J])
+    theta = np.array([model.theta[s] for s in model.S])
+    w1 = np.array([[model.w1[t, j].value for t in model.T] for j in model.J])
+    w2 = np.array([[model.w2[t, j].value for t in model.T] for j in model.J])
+
+
+    def compute_flow2(t, j):
+        dz = z[j, :, t+1]
+        dx = (x[j, :, t+1] - x[j, :, t]) / dt
+        flow = (
+            -pe * np.sum(kappa * dz - dx)
+            + pa[j, t] * np.sum(theta * dz)
+            - (zeta_u / 2) * (w1[j, t] ** 2)
+            - (zeta_v / 2) * (w2[j, t] ** 2)
+        )
+        return flow
+    
+    
+    object_value_C_t3 = {}
+    for j in range(J):
+        object_value_C_t3[j+1] = (1 - np.exp(-delta)) * sum(
+            np.exp(-delta * (t * dt - 3 * dt)) * compute_flow2(t, j)
+            for t in range(3, T-1)
+        ) * dt
+        
+
+    g_2_1= np.exp(-1/xi*object_value_C_t3[1])/(model.p_C2_1_ori*np.exp(-1/xi*object_value_C_t3[1])+(1-model.p_C2_1_ori)*np.exp(-1/xi*object_value_C_t3[2]))
+    g_2_2= np.exp(-1/xi*object_value_C_t3[3])/(model.p_C2_2_ori*np.exp(-1/xi*object_value_C_t3[3])+(1-model.p_C2_2_ori)*np.exp(-1/xi*object_value_C_t3[4]))
+    g_2_3= np.exp(-1/xi*object_value_C_t3[5])/(model.p_C2_3_ori*np.exp(-1/xi*object_value_C_t3[5])+(1-model.p_C2_3_ori)*np.exp(-1/xi*object_value_C_t3[6]))
+    g_2_4= np.exp(-1/xi*object_value_C_t3[7])/(model.p_C2_4_ori*np.exp(-1/xi*object_value_C_t3[7])+(1-model.p_C2_4_ori)*np.exp(-1/xi*object_value_C_t3[8]))
+    
+
+    # Group states into state primes: {1, 2}, {3, 4}, {5, 6}, {7, 8}
+    state_C2_C3_mapping = {
+        1: [1, 2],
+        2: [1, 2],
+        3: [3, 4],
+        4: [3, 4],
+        5: [5, 6],
+        6: [5, 6],
+        7: [7, 8],
+        8: [7, 8],
+    }
+
+    state_C2_C3_prob = {
+        1: model.p_C2_1_ori, 
+        2: 1-model.p_C2_1_ori,  
+        3: model.p_C2_2_ori,  
+        4: 1-model.p_C2_2_ori,   
+        5: model.p_C2_3_ori, 
+        6: 1-model.p_C2_3_ori, 
+        7: model.p_C2_4_ori, 
+        8: 1-model.p_C2_4_ori,  
+    }
+
+
+
+    object_value_C_t2 = {
+        j+1: (1 - np.exp(-delta)) * compute_flow2(2, j)
+        - np.exp(-delta) * xi * np.log(sum(
+            state_C2_C3_prob[m] * np.exp(-1/xi*object_value_C_t3[m]) for m in state_C2_C3_mapping[j+1]
+        ))
+        for j in range(J) 
+    }
+
+
+    g_1_1 = np.exp(-1/xi*object_value_C_t2[1])/(model.p_C1_1_ori*np.exp(-1/xi*object_value_C_t2[1])+(1-model.p_C1_1_ori)*np.exp(-1/xi*object_value_C_t2[3]))
+    g_1_2 = np.exp(-1/xi*object_value_C_t2[5])/(model.p_C1_2_ori*np.exp(-1/xi*object_value_C_t2[5])+(1-model.p_C1_2_ori)*np.exp(-1/xi*object_value_C_t2[7]))
+
+
+    state_C1_C2_prob = {
+        1: model.p_C1_1_ori,    
+        2: model.p_C1_1_ori,    
+        3: 1-model.p_C1_1_ori,   
+        4: 1-model.p_C1_1_ori,  
+        5: model.p_C1_2_ori, 
+        6: model.p_C1_2_ori,   
+        7: 1-model.p_C1_2_ori,    
+        8: 1-model.p_C1_2_ori, 
+    }
+
+    obj_C_t1 = {}
+    obj_C_t1[0] = (1 - np.exp(-delta)) * compute_flow2(1, 0) - np.exp(-delta) * xi * np.log( sum(
+        state_C1_C2_prob[j] * np.exp(-1/xi*object_value_C_t2[j]) for j in [1,3]
+    ))
+    obj_C_t1[1] = (1 - np.exp(-delta)) * compute_flow2(1, 4) - np.exp(-delta) * xi * np.log( sum(
+        state_C1_C2_prob[j] * np.exp(-1/xi*object_value_C_t2[j]) for j in [5,7]
+    ))
+
+
+    g_0_1 = np.exp(-1/xi*obj_C_t1[0])/(model.p_C0_1_ori*np.exp(-1/xi*obj_C_t1[0])+(1-model.p_C0_1_ori)*np.exp(-1/xi*obj_C_t1[1]))
+
+
+
+    return g_0_1, g_1_1, g_1_2, g_2_1, g_2_2, g_2_3, g_2_4
+
+
+
+

@@ -49,7 +49,7 @@ else:
 
 solver="gurobi"
 num_sites=78
-pa=41.11
+pa=41.1
 model="mpc"
 
 (
@@ -80,6 +80,7 @@ results = mpc_solve_planner_problem(
     price_high = price_high,
     prob_ll=prob_ll,
     prob_hh=prob_hh,
+    type=type,
 )
 print("Results for pe = ", pe)
 

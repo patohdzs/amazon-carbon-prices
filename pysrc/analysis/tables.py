@@ -229,7 +229,7 @@ def transfer_cost(pee=7.1, num_sites=78, solver="gurobi", pa=41.11, y=30, model=
             results_NT2.append(result_NT2)
         total_NT2 = np.sum(results_NT2)
 
-        total_EC = total_NT2 / (total_NCE - total_NCE_base) * 100
+        total_EC = b[order]*total_NCE / (total_NCE - total_NCE_base) 
 
         total_NCE = total_NCE.round(2)
         total_NT2 = total_NT2.round(2)

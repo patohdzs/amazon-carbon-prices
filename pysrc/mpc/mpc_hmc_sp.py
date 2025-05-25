@@ -6,11 +6,11 @@ from pathlib import Path
 from gams import GamsWorkspace
 import shutil
 from pysrc.services.file_service import get_path
-from pysrc.services.data_service import load_productivity_params, load_site_data
+from pysrc.services.data_service import load_productivity_params
 from pysrc.services.file_service import get_path
 from pysrc.mpc.mpc_optimization import mpc_solve_planner_problem
 from pysrc.optimization import PlannerSolution
-from pysrc.services.data_service import load_site_data_1995,load_price_data
+from pysrc.services.data_service import load_site_data_1995
 
 import argparse
 parser = argparse.ArgumentParser(description="parameter settings")
@@ -79,6 +79,7 @@ results = mpc_solve_planner_problem(
     price_high = price_high,
     prob_ll=prob_ll,
     prob_hh=prob_hh,
+    type=type,
 )
 print("Results for pe = ", pe)
 
