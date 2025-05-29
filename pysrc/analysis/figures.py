@@ -117,7 +117,7 @@ def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="d
         format="png",
         bbox_inches="tight",
     )
-    plt.show()
+    plt.close()
 
     plt.figure(figsize=(10, 6))
     plt.plot([], [], " ", label=custom_labels[0])
@@ -151,7 +151,8 @@ def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="d
         format="png",
         bbox_inches="tight",
     )
-    plt.show()
+    plt.close()
+    return
 
 
 def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, model="det"):
@@ -208,8 +209,8 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
     #     gamma_sites_to_plot = range(num_sites)
     #     theta_sites_to_plot = range(num_sites)
     # else:
-    gamma_sites_to_plot = [773, 871]  
-    theta_sites_to_plot = [983, 1033]  
+    gamma_sites_to_plot = [690, 903]  
+    theta_sites_to_plot = [985, 1039]  
 
     for idx in gamma_sites_to_plot:
         fig, axes = plt.subplots(1, 1, figsize=(8, 6))
@@ -265,7 +266,7 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
         plt.xlabel("parameter value", fontsize=16)
         plt.ylabel("density", fontsize=16)
         plt.legend(fontsize=16)
-        plt.xlim(500,660)
+        plt.xlim(520,680)
         file_name = os.path.join(output_folder, f"gamma_distribution_{idx+1}_b15_xi_{xi}.png")
         fig.savefig(file_name, format="png")
         plt.close()

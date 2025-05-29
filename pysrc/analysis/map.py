@@ -99,9 +99,8 @@ def spatial_allocation(solver='gams',
 
 
 
-    bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=50)
+    bin_edges = np.histogram_bin_edges(np.concatenate((positions_hmc_array[positions_hmc_array != 111], positions_det_array[positions_det_array != 111])), bins=40)
 
-        
     plt.figure(figsize=(8, 6))
     plt.hist(positions_hmc_array[positions_hmc_array != 111],  bins=bin_edges, color='red', alpha=0.6,label='ambiguity averse')
     plt.hist(positions_det_array[positions_det_array != 111], bins=bin_edges, color='blue', alpha=0.6,label='ambiguity neutral')

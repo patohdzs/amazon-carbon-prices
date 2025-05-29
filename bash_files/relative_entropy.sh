@@ -1,10 +1,7 @@
 
-# xiarray=(5.0)
-# pee=4.5
-# sites=1043
 
 xiarray=(1.0)
-pee=2.2
+pee=4.7
 sites=1043
 
 for xi in "${xiarray[@]}"; do
@@ -34,19 +31,20 @@ for xi in "${xiarray[@]}"; do
 #SBATCH --output=./job-outs/$job_name/${action_name}/site_${sites}/pee_${pee}/xi_${xi}/run.out
 #SBATCH --error=./job-outs/$job_name/${action_name}/site_${sites}/pee_${pee}/xi_${xi}/run.err
 #SBATCH --time=1-11:00:00
-#SBATCH --partition=bigmem
+#SBATCH --partition=caslake
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=12G
 
 module load python/anaconda-2022.05  
+source .venv/bin/activate
 
 echo "\$SLURM_JOB_NAME"
 
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_conju/amazon-carbon-prices/pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee}
+python3 -u /project/lhansen/HMC_0525/amazon-carbon-prices/pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee}
 echo "Program ends \$(date)"
 end_time=\$(date +%s)
 elapsed=\$((end_time - start_time))

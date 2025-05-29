@@ -137,43 +137,6 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gurobi", model="det", xi=2, p
             results.append(result)
         results = np.array(results)
 
-    if model == "mpc":
-        (
-            zbar_1995,
-            z_1995,
-            forest_area_1995,
-            _,
-            _,
-            _,
-            _,
-            z_2008,
-            theta,
-            gamma,
-        ) = load_site_data_1995(sitenum)
-
-        pe_values = np.arange(pe_low, pe_high, 0.05)
-
-        results = []
-        for pe in pe_values:
-            result = shadow_price_opt(
-                zbar_1995,
-                z_1995,
-                forest_area_1995,
-                z_2008,
-                theta,
-                gamma,
-                sitenum=sitenum,
-                solver=solver,
-                timehzn=200,
-                pa=pa,
-                pe=pe,
-                model="mpc",
-            )
-            results.append(result)
-            print(f"pe: {pe}, result: {result}")
-
-        results = np.array(results)
-
     min_index = np.argmin(results)
     min_result = results[min_index]
     min_pe = pe_values[min_index]
@@ -187,6 +150,12 @@ def shadow_price_cal(sitenum=78, pa=41.11, solver="gurobi", model="det", xi=2, p
 # print("min_result",min_result,"min_pe",det_78_pe)
 
 
-min_result, hmc_1043_pe = shadow_price_cal(sitenum=num_sites, model="hmc", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
-print("min_result", min_result, "min_pe", hmc_1043_pe)
+if xi==10000:
+    min_result, hmc_1043_pe = shadow_price_cal(sitenum=num_sites, model="det", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
+    print("min_result", min_result, "min_pe", hmc_1043_pe)
+else:
+    min_result, hmc_1043_pe = shadow_price_cal(sitenum=num_sites, model="hmc", xi=xi,solver='gurobi',pe_low=seed_i, pe_high=(seed_i+0.01))
+    print("min_result", min_result, "min_pe", hmc_1043_pe)
+
+
 

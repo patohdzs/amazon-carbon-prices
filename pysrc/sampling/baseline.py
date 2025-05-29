@@ -2,6 +2,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 from cmdstanpy import CmdStanModel
 
 from pysrc.services.data_service import load_gamma_calib, load_theta_calib
@@ -15,6 +16,8 @@ num_sites=args.sites
 
 
 output_dir = get_path("data", "calibration")
+os.makedirs(get_path("output", "tables"), exist_ok=True)
+
 
 # Compile Stan code
 sampler = CmdStanModel(
@@ -90,14 +93,14 @@ gamma_quan_table = pd.DataFrame({
     "50th_percentile": percentiles_gamma[1],
     "90th_percentile": percentiles_gamma[2]
 })
-gamma_quan_table.to_csv(get_path("output", "tables") /"gamma_percentiles.csv", index=False)
+gamma_quan_table.to_csv(get_path("output", "tables") /f"gamma_percentiles_{num_sites}.csv", index=False)
 
 theta_quan_table = pd.DataFrame({
     "10th_percentile": percentiles_theta[0],
     "50th_percentile": percentiles_theta[1],
     "90th_percentile": percentiles_theta[2]
 })
-theta_quan_table.to_csv(get_path("output", "tables") /"theta_percentiles.csv", index=False)
+theta_quan_table.to_csv(get_path("output", "tables") /f"theta_percentiles_{num_sites}.csv", index=False)
 
 
 sigma_quan_table = pd.DataFrame({
@@ -117,7 +120,7 @@ sigma_quan_table = pd.DataFrame({
     "theta_sigma_v_90th": [percentiles_theta_sigma_v[2]],
 })
 
-sigma_quan_table.to_csv(get_path("output", "tables") /"sigma_percentiles.csv", index=False)
+sigma_quan_table.to_csv(get_path("output", "tables") /f"sigma_percentiles_{num_sites}.csv", index=False)
 
 
 

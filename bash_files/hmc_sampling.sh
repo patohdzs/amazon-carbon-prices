@@ -1,25 +1,21 @@
 
-# xiarray=(1 5 10000)
-# idarray=(0 10 15 20 25)
-# peearray=(4.5 6.6)
 
-
-# xiarray=(1)
-# idarray=(0 10 15 20 25)
-# peearray=(2.2)
-
-# xiarray=(5)
-# idarray=(0 10 15 20 25)
-# peearray=(4.5)
-
-xiarray=(10000)
+xiarray=(0.5 1 2 10000)
 idarray=(0 10 15 20 25)
-peearray=(2.2 4.5 6.6)
 
 sites=1043
 
-for pee in "${peearray[@]}"; do
-    for xi in "${xiarray[@]}"; do
+for xi in "${xiarray[@]}"; do
+  if [[ "$xi" == "0.5" ]]; then
+    peearray=(2.8)
+  elif [[ "$xi" == "1" ]]; then
+    peearray=(6.6 4.7)
+  elif [[ "$xi" == "2" ]]; then
+    peearray=(5.5)
+  else
+    peearray=(6.6 4.7)
+  fi
+    for pee in "${peearray[@]}"; do
         for id in "${idarray[@]}"; do
    
                             count=0
@@ -52,13 +48,15 @@ for pee in "${peearray[@]}"; do
 #SBATCH --mem=12G
 
 module load python/anaconda-2022.05  
+module load gurobi/11.0
+source .venv/bin/activate
 
 echo "\$SLURM_JOB_NAME"
 
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_conju/amazon-carbon-prices/pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee}
+python3 -u /project/lhansen/HMC_0525/amazon-carbon-prices/pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee}
 echo "Program ends \$(date)"
 end_time=\$(date +%s)
 elapsed=\$((end_time - start_time))

@@ -69,7 +69,7 @@ gamma_adjusted_b15 = b15["final_sample"][:16000, num_sites:]
 
 
 def compute_kl(unadj, adj):
-    common_grid = np.linspace(min(unadj.min(), adj.min()), max(unadj.max(), adj.max()), 1000)
+    common_grid = np.linspace(min(unadj.min(), adj.min()), max(unadj.max(), adj.max()), 100)
     p = gaussian_kde(unadj, bw_method='scott')(common_grid) + 1e-20
     q = gaussian_kde(adj, bw_method='scott')(common_grid) + 1e-20
     return entropy(p, q)
