@@ -127,7 +127,7 @@ amazon_biome <- sf::st_transform(amazon_biome, sf::st_crs(prediction.1043SitesMo
 
 
 circle_theta_b0 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(984)) %>%
+  dplyr::filter(id %in% c(986)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -135,7 +135,7 @@ circle_theta_b0 <- prediction.1043SitesModel %>%
   )
 
 circle_theta_b15 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(1034)) %>%
+  dplyr::filter(id %in% c(1040)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -143,7 +143,7 @@ circle_theta_b15 <- prediction.1043SitesModel %>%
   )
 
 circle_gamma_b0 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(774)) %>%
+  dplyr::filter(id %in% c(691)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -151,7 +151,7 @@ circle_gamma_b0 <- prediction.1043SitesModel %>%
   )
 
 circle_gamma_b15 <- prediction.1043SitesModel %>%
-  dplyr::filter(id %in% c(872)) %>%
+  dplyr::filter(id %in% c(904)) %>%
   sf::st_centroid() %>%
   dplyr::mutate(
     x = sf::st_coordinates(.)[,1],  # Extract x coordinate
@@ -317,28 +317,28 @@ dir.create(here::here("plots/1043-hmc"), recursive = TRUE, showWarnings = FALSE)
 
 ggpubr::ggexport(
   plot = plot_theta_b0,   
-  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_theta_b0.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc/re_theta_b0.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_theta_b15,   
-  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_theta_b15.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc/re_theta_b15.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_gamma_b0,   
-  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_gamma_b0.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc/re_gamma_b0.png")),  
   width = 2400,   
   height = 1500   
 )
 
 ggpubr::ggexport(
   plot = plot_gamma_b15,   
-  filename = here::here(glue::glue("plots/1043-hmc_xi1/re_gamma_b15.png")),  
+  filename = here::here(glue::glue("plots/1043-hmc/re_gamma_b15.png")),  
   width = 2400,   
   height = 1500   
 )
