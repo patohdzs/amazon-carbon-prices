@@ -8,17 +8,18 @@
 1.7. run rsrc/masterfile_all.R
 
 
-2. put data/calibration/hmc folder into it 
 
+2 installation instruction 1 to 4
 
-2.5 installation instruction 1 to 4
+3. python pysrc/sampling/baseline.py 
+4. python pysrc/sampling/baseline.py --sites 78 
 
-3. python scripts/sample_baseline_gamma.py (or use bash files)
-4. python scripts/sample_baseline_theta.py (or use bash files)
-
-output: output/tables/gamma_percentiles.csv (Table 21)
-	output/tables/theta_percentiles.csv (Table 22)
-
+output: output/tables/gamma_percentiles_78.csv 
+	output/tables/theta_percentiles_78.csv 
+	output/tables/sigma_percentiles_78.csv
+	output/tables/gamma_percentiles_1043.csv (Table 21)
+	output/tables/theta_percentiles_1043.csv (Table 22)
+	output/tables/sigma_percentiles_1043.csv (Table 23)
 
 
 
@@ -56,7 +57,6 @@ output: output/tables/present_value_site1043_pa41.11_det.tex
 
 
 
-
 /// Figure 7,8 
 
 8.1 R rsrc/analysis/map_1043_det.R
@@ -69,10 +69,7 @@ output: plots/1043-det/map_z0z30GammaTheta_1043Sites_allPrices_det.png
 9. python pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee} (or use bash bash_files/hmc_sampling.sh)
 
 
-
-
 10. python pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee} (or use bash_files/relative_entropy.sh)
-
 
 
 
@@ -103,16 +100,15 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 
 
-11.1 python pysrc/mpc/mpc_simulating.py 
-     python pysrc/mpc/mpc_simulating.py --type="constrained"	 
-     python pysrc/mpc/mpc_simulating.py --type="shadow_price"	 
+11. bash mpc_prepare.sh	 
+
+12. bash mpc_hmc_sp.sh
 
 
-11.2 pysrc/bash/mpc_hmc_sp.py --pe ${pe} --xi ${xi} --type ${type}
-
-
-
-
+mpc_prepare.sh
+mpc_hmc_sp.sh
+mpc_compute_sp.py
+mpc_hmc.sh 999
 
 
 
@@ -130,15 +126,13 @@ output: output/tables/hmm_results_table.tex
 
 
 
-A.2 R rsrc/analysis/map_1043_hmc_xi5.R
+A.2 R rsrc/analysis/map_1043_hmc_xi05.R
     R rsrc/analysis/map_1043_hmc_xi1.R
 output: plots/1043-hmc_xi5/map_zDecades_1043Sites_pe19.5_hmc.png (Figure 18)
 	plots/1043-hmc_xi1/map_zDecades_1043Sites_pe17.2_hmc.png (Figure 19)
 
 
 
-
-MPC text, Table 12, B.1 needs to be checked
 
 
 
