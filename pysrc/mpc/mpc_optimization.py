@@ -3,11 +3,7 @@ import time
 from dataclasses import dataclass
 import pandas as pd
 import numpy as np
-from scipy.special import logsumexp
 import pyomo.environ as pyo
-from pyomo.environ import value
-import dill as pickle 
-from cmdstanpy import CmdStanModel
 import os
 from pyomo.environ import (
     ConcreteModel,
@@ -64,22 +60,7 @@ def mpc_solve_planner_problem(
     mode=None,
     type=None,
 ):
-    # pickle_file = 'stan_model/mpc_compiled_model.pkl'
 
-    # if os.path.exists(pickle_file):
-    #     # Load the model from the pickle file
-    #     sampler = pickle.load(open(pickle_file, 'rb'))
-    #     print("Loaded model from pickle.")
-    # else:
-    #     # Compile the Stan model and save it to the pickle file
-    #     sampler = CmdStanModel(
-    #         stan_file=get_path("stan_model") / "mpc_adjusted.stan",
-    #         cpp_options={"STAN_THREADS": "true"},
-    #         force_compile=True,
-    #     )
-    #     with open(pickle_file, 'wb') as f:
-    #         pickle.dump(sampler, f)
-    #     print("Compiled model and saved to pickle.")
     
     output_base_path = os.path.join(
         str(get_path("output")),
@@ -158,8 +139,6 @@ def mpc_solve_planner_problem(
     model.dt = Param(initialize=dt)
     
     
-    # model.p_ll = Param(initialize=prob_ll, mutable=True)
-    # model.p_hh = Param(initialize=prob_hh, mutable=True)
     
     model.p_C0_1 = Param(initialize=prob_ll, mutable=True)
     model.p_C1_1 = Param(initialize=prob_ll, mutable=True)
@@ -273,7 +252,7 @@ def mpc_solve_planner_problem(
         
         
     for Q in range(iteration_period):
-    # for Q in range(1):
+
         
         model.pa_current.set_value(pa_list[Q])
 
@@ -352,11 +331,6 @@ def mpc_solve_planner_problem(
             print(f"Optimization Iteration[{cntr+1}/{max_iter}]\n")
             
             
-            # if cntr>0:
-            #     model.p_ll = uncertain_vals[0]
-            #     model.p_hh = uncertain_vals[1]
-            
-
             
             # Solve the model
             opt = SolverFactory(solver)
@@ -371,9 +345,7 @@ def mpc_solve_planner_problem(
             print(f"Done! Time elapsed: {time.time()-start_time} seconds.")
             
             g_0_1, g_1_1, g_1_2, g_2_1, g_2_2, g_2_3, g_2_4=adjust(model,T=time_horizon,S=gamma.size,J=sto_horizon)
-            # solved_obj_val = value(model.obj)
-            # print(f"Objective value: {solved_obj_val}")
-            # print("adjustment value:",object_value_C_t0)
+
             print("g_0_1:",g_0_1)
             print("g_1_1:",g_1_1)
             print("g_1_2:",g_1_2)
@@ -428,16 +400,6 @@ def mpc_solve_planner_problem(
                 }
             )
             
-
-        # if Q+1 in [1,20,40,60,80,100,120,140,160,180,200]:
-        #     df = pd.DataFrame({
-        #         "p_ll": p_ll_samples.flatten(),  # Convert to 1D array
-        #         "p_hh": p_hh_samples.flatten()
-        #     })
-
-        #     # Save to CSV
-        #     df.to_csv(os.path.join(output_base_path, f"Year_{Q+1}_p_ll_p_hh_samples.csv"), index=False)
-
 
 
 
@@ -690,7 +652,7 @@ def adjust(model,T,S,J):
     for j in range(J):
         object_value_C_t3[j+1] = (1 - np.exp(-delta)) * sum(
             np.exp(-delta * (t * dt - 3 * dt)) * compute_flow2(t, j)
-            for t in range(3, T-1)
+            for t in range(3, T)
         ) * dt
         
 

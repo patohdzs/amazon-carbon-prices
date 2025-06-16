@@ -3,8 +3,6 @@ import shutil
 
 import numpy as np
 import pandas as pd
-
-from pysrc.sampling import mpc_estimation
 from pysrc.services.file_service import get_path
 import argparse
 parser = argparse.ArgumentParser(description="mpc simulation")
@@ -130,13 +128,15 @@ if type == "shadow_price":
         "constrained",
     )
 
-
+    os.makedirs(location1, exist_ok=True)
+    os.makedirs(location2, exist_ok=True)
+    
     num_observations = 200
     index = range(1, num_observations + 1)
     
     predefined_states = [
         2, 2, 2, 2, 2, 2, 2, 2, 1, 1,
-        1, 1, 1, 2, 2, 2, 2, 1, 1, 2
+        1, 1, 1, 2, 1, 1, 2, 1, 1, 2
     ]
 
     transformed_markov_chain = predefined_states + [1] * (num_observations - 20)
@@ -146,6 +146,19 @@ if type == "shadow_price":
     )
 
     markov_chain_df.to_csv(location1 +  f"/mc_999.csv", index=False)
+    
+    
+    predefined_states = [
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 1, 1, 2, 2, 2, 2, 2, 2, 2
+    ]
+
+    transformed_markov_chain = predefined_states + [1] * (num_observations - 20)
+    
+    markov_chain_df = pd.DataFrame(
+        {"Index": index, "scenario": transformed_markov_chain}
+    )
+    
     markov_chain_df.to_csv(location2 +  f"/mc_999.csv", index=False)
 
 
@@ -180,9 +193,9 @@ if type =="converge_uncon":
 
     prob_dict = {
         0.5: {
-            "b0": {"prob_ll": 0.977, "prob_hh": 1-0.793},
-            "b10": {"prob_ll":0.778, "prob_hh": 1-0.235},
-            "b15": {"prob_ll": 0.736, "prob_hh": 1-0.196},
+            "b0": {"prob_ll": 0.978, "prob_hh": 1-0.800},
+            "b10": {"prob_ll": 0.780, "prob_hh": 1-0.237},
+            "b15": {"prob_ll": 0.737, "prob_hh": 1-0.197},
             "b20": {"prob_ll": 0.719, "prob_hh": 1-0.183},
             "b25": {"prob_ll": 0.715, "prob_hh": 1-0.180},
         },
@@ -199,7 +212,7 @@ if type =="converge_uncon":
     for xi in xi_values:
         for b in b_values:
             if xi==0.5:
-                pee=5.7
+                pee=5.6
             elif xi==1.0:
                 pee=6.0
             pe = pee +b
@@ -249,7 +262,7 @@ if type =="converge_con":
             "b25": {"prob_ll": 0.766, "prob_hh": 1-0.042},
         },
         0.5: {
-            "b0": {"prob_ll": 0.991, "prob_hh": 1-0.614},
+            "b0": {"prob_ll": 0.991, "prob_hh": 1-0.610},
             "b10": {"prob_ll": 0.830, "prob_hh": 1-0.062},
             "b15": {"prob_ll":  0.789, "prob_hh": 1-0.047},
             "b20": {"prob_ll": 0.774, "prob_hh": 1-0.0439},

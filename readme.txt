@@ -104,11 +104,13 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 12. bash mpc_hmc_sp.sh
 
+13. python mpc_compute_sp.py
 
-mpc_prepare.sh
-mpc_hmc_sp.sh
-mpc_compute_sp.py
-mpc_hmc.sh 999
+14. bash mpc_hmc.sh
+
+15. python mpc_compute.py
+
+16. mpc_trajectory.py
 
 
 

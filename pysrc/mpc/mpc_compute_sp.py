@@ -66,17 +66,16 @@ def mpc_sp(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained", b=0,xi
 
 
 
-# xi=1.0
-# for pe in np.linspace(5.0, 6.3, num=27):
-#     print("pe",pe)
-#     print("ratio",mpc_sp(pee=pe,num_sites=78,b=0,xi=xi,model="unconstrained"))
 
+for xi in (0.5, 1.0, 10000.0):
+    for pe in np.linspace(5.0, 6.3, num=14):
+        print("xi",xi,"pe",pe,"model unconstrained")
+        print("ratio",mpc_sp(pee=pe,num_sites=78,b=0,xi=xi,model="unconstrained"))
 
-
-xi=10000.0
-for pe in np.linspace(5.0, 6.3, num=14):
-    print("pe",pe)
-    print("ratio",mpc_sp(pee=pe,num_sites=78,b=0,xi=xi,model="constrained"))
+for xi in (0.5, 1.0, 10000.0):
+    for pe in np.linspace(5.0, 6.3, num=14):
+        print("xi",xi,"pe",pe,"model constrained")
+        print("ratio",mpc_sp(pee=pe,num_sites=78,b=0,xi=xi,model="constrained"))
 
 
 
@@ -85,7 +84,7 @@ for pe in np.linspace(5.0, 6.3, num=14):
 #### unconstrained model
 #### 6.3 for xi=10000
 #### 6.0 for xi=1
-#### 5.7 for xi=0.5
+#### 5.6 for xi=0.5
 
 
 #### constrained model

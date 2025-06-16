@@ -3,11 +3,15 @@
 xiarray=(0.5 1 2 10000)
 idarray=(0 10 15 20 25)
 
+# xiarray=(0.5)
+# idarray=(0 10 15 20 25)
+
+
 sites=1043
 
 for xi in "${xiarray[@]}"; do
   if [[ "$xi" == "0.5" ]]; then
-    peearray=(2.8)
+    peearray=(2.9)
   elif [[ "$xi" == "1" ]]; then
     peearray=(6.6 4.7)
   elif [[ "$xi" == "2" ]]; then

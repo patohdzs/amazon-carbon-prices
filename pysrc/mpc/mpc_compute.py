@@ -1,9 +1,6 @@
 import os
-import pickle
-
 import numpy as np
 import pandas as pd
-
 from pysrc.services.data_service import load_productivity_params
 from pysrc.services.file_service import get_path
 
@@ -42,7 +39,7 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
         os.makedirs(output_folder)
 
     results = []
-    for j in range(29):
+    for j in range(49):
         
         
         if mode =="converge":
@@ -170,20 +167,20 @@ def value_decom_mpc(pee=5.9, num_sites=78, solver="gurobi", model="unconstrained
 #     value_decom_mpc(pee=6.0,num_sites=78,b=b,xi=1.0,mode="converge")
     
 # for b in [0,10,15,25]:
-#     value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=0.5,mode="converge")
+#     value_decom_mpc(pee=5.6,num_sites=78,b=b,xi=0.5,mode="converge")
 
 
 
-######## Appendix tables
+####### Appendix tables
 
-# for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=6.0,num_sites=78,b=b,xi=10000.0,model="constrained",price_low=32.49,price_high = 42.85)
+for b in [0,10,15,20,25]:
+    value_decom_mpc(pee=6.0,num_sites=78,b=b,xi=10000.0,model="constrained",price_low=32.49,price_high = 42.85)
     
-# for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
+for b in [0,10,15,20,25]:
+    value_decom_mpc(pee=5.7,num_sites=78,b=b,xi=1.0,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
     
-# for b in [0,10,15,20,25]:
-#     value_decom_mpc(pee=5.2,num_sites=78,b=b,xi=0.5,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
+for b in [0,10,15,20,25]:
+    value_decom_mpc(pee=5.2,num_sites=78,b=b,xi=0.5,mode="converge",model="constrained",price_low=32.49,price_high = 42.85)
     
     
     

@@ -97,6 +97,7 @@ parameters {
   vector[M_theta] nu_theta_transform;
   real log_precision_u_theta;
   real log_precision_v_theta;
+  // real<lower=log(1e-5), upper=log(1e5)> log_precision_v_theta;
 }
 transformed parameters {
   real sigma_u_gamma = exp(-0.5 * log_precision_u_gamma);

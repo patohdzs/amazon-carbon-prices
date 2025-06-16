@@ -78,6 +78,14 @@ def plot_hmm_results(mu,predict, price, var):
     start_date = '1995-01'
     dates = pd.date_range(start=start_date, periods=276, freq='M')
 
+    df = pd.DataFrame({
+    'date': dates,
+    'predict': predict
+    })
+
+    # Save to CSV
+    df.to_csv(f'output/tables/smooth_prob_{var}.csv', index=False)
+
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
     # Plot the first dataset with the left y-axis (ax1)

@@ -7,6 +7,15 @@ from pysrc.optimization import solve_planner_problem
 from pysrc.sampling import adjusted
 from pysrc.services.data_service import load_site_data
 from pysrc.services.file_service import get_path
+import argparse
+
+
+parser = argparse.ArgumentParser(description="test")
+parser.add_argument("--id",type=int,default=1)
+
+args = parser.parse_args()
+id=args.id
+
 
 # ## Model scenario
 solver = "gurobi"  # need to install gurobi solver
@@ -29,12 +38,14 @@ results = adjusted.sample(
     T=200,
     solver=solver,
     max_iter=100,
-    final_sample_size=2_000,
+    final_sample_size=4_000,
     iter_sampling=4000,
-    iter_warmup=1000,
+    iter_warmup=500,
     show_progress=True,
-    chains=4,
-    seed=123,
+    seed=id,
+    # inits=0.1,
+    chains=4,  
+    tol=0.005,
 )
 
 output_base_path = os.path.join(

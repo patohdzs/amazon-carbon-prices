@@ -1,19 +1,18 @@
 
-pearray=($(seq 5.0 0.1 6.5))
-xi=0.2
-type="constrained"
 
-
-
+xiarray=(0.5 1 10000)
+pearray=($(seq 5.0 0.1 6.3))
 id=999
 
+typearray=("unconstrained" "constrained")
 
-
-for pe in "${pearray[@]}"; do
-   
+for type in "${typearray[@]}"; do
+    for xi in "${xiarray[@]}"; do
+        for pe in "${pearray[@]}"; do
+    
                             count=0
                                         
-                            action_name="mpc_hmc_sp"
+                            action_name="mpc_sp"
 
                             dataname="${action_name}"
 
@@ -48,7 +47,7 @@ echo "\$SLURM_JOB_NAME"
 echo "Program starts \$(date)"
 start_time=\$(date +%s)
 
-python3 -u /project/lhansen/HMC_rp/amazon-carbon-prices/pysrc/mpc/mpc_hmc_sp.py --pe ${pe} --xi ${xi} --type ${type}
+python3 -u /project/lhansen/HMC_0525/amazon-carbon-prices/pysrc/mpc/mpc_hmc_sp.py --pe ${pe} --xi ${xi} --type ${type}
 echo "Program ends \$(date)"
 end_time=\$(date +%s)
 elapsed=\$((end_time - start_time))
@@ -58,6 +57,6 @@ eval "echo Elapsed time: \$(date -ud "@\$elapsed" +'\$((%s/3600/24)) days %H hr 
 EOF
     count=$(($count + 1))
     sbatch ./bash/${action_name}/xi_${xi}/pe_${pe}/id_${id}/type_${type}/run.sh
-
-
+        done
+    done
 done

@@ -184,8 +184,9 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
             "sampling",
             solver,
             f"{num_sites}sites",
-            f"pa_{pa}",
-            "xi_10000.0",
+            "baseline",
+            # f"pa_{pa}",
+            # "xi_10000.0",
         )
     
     with open(result_folder + f"/pe_{pee}/results.pcl", "rb") as f:
@@ -194,11 +195,13 @@ def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, 
     with open(result_folder + f"/pe_{pee+15}/results.pcl", "rb") as f:
         b15 = pickle.load(f)
 
-    with open(prior_folder + f"/pe_{pee_det+15}/results.pcl", "rb") as f:
+    with open(prior_folder + f"/results.pcl", "rb") as f:
         results_unadjusted = pickle.load(f)
 
-    theta_unadjusted = results_unadjusted["final_sample"][:16000, :num_sites]
-    gamma_unadjusted = results_unadjusted["final_sample"][:16000, num_sites:]
+    # theta_unadjusted = results_unadjusted["final_sample"][:16000, :num_sites]
+    # gamma_unadjusted = results_unadjusted["final_sample"][:16000, num_sites:]
+    theta_unadjusted = results_unadjusted["theta"]
+    gamma_unadjusted = results_unadjusted["gamma"]
     theta_adjusted_b0 = b0["final_sample"][:16000, :num_sites]
     gamma_adjusted_b0 = b0["final_sample"][:16000, num_sites:]
     theta_adjusted_b15 = b15["final_sample"][:16000, :num_sites]
@@ -391,8 +394,8 @@ def trajectory_diff(
     time = list(range(0, len(result_zper_hmc)))
     plt.figure(figsize=(10, 6))
 
-    plt.plot(time, result_zper_hmc, label=rf"$\xi^a$={xi}", linewidth=4, color="blue")
-    plt.plot(time, result_zper_det, label=r"$\xi^a=\infty$", linewidth=4, color="red")
+    plt.plot(time, result_zper_hmc, label=rf"$\xi$={xi}", linewidth=4, color="blue")
+    plt.plot(time, result_zper_det, label=r"$\xi=\infty$", linewidth=4, color="red")
     plt.xlabel("years", fontsize=16)
     plt.ylabel("Z(%)", fontsize=16)
     plt.xlim(0, max(time) + 2)
@@ -463,7 +466,6 @@ def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215
 
         # Compute X_dot
         X_dot = np.diff(X, axis=0)
-        print(X_dot[0].sum())
 
         # Compute transfers
         transfers = -b * (kappa * Z[1:] - X_dot).sum(axis=1)
@@ -475,7 +477,7 @@ def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215
     plt.legend()
 
     # Adding labels and title
-    plt.xlabel("Time (years)")
+    plt.xlabel("years")
     plt.ylabel("Net Transfers ($ billion)")
 
     # Save figure
