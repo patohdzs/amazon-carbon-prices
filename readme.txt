@@ -91,26 +91,23 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 
 
--- test until here
-
-
 
 
 ///mpc
 
 
 
-11. bash mpc_prepare.sh	 
+11. bash bash_files/mpc_prepare.sh	 
 
-12. bash mpc_hmc_sp.sh
+12. bash bash_files/mpc_hmc_sp.sh
 
-13. python mpc_compute_sp.py
+13. python pysrc/mpc/mpc_compute_sp.py
 
-14. bash mpc_hmc.sh
+14. bash bash_files/mpc_hmc.sh
 
-15. python mpc_compute.py
+15. python pysrc/mpc/mpc_compute.py
 
-16. mpc_trajectory.py
+16. python scripts/mpc_trajectory.py
 
 
 
@@ -134,7 +131,7 @@ output: plots/1043-hmc_xi5/map_zDecades_1043Sites_pe19.5_hmc.png (Figure 18)
 	plots/1043-hmc_xi1/map_zDecades_1043Sites_pe17.2_hmc.png (Figure 19)
 
 
-
+A.3 python scripts/bayesian_R2.py
 
 
 
