@@ -39,7 +39,7 @@ load(here::here("data/calibration/", "calibration_1043_sites.Rdata"))
 
 
 # 1043 SITES AGGREGATE PREDICTION
-aux.prices <- c(2.8, 12.8, 17.8, 22.8, 27.8)
+aux.prices <- c(2.9, 12.9, 17.9, 22.9, 27.9)
 
 
 
