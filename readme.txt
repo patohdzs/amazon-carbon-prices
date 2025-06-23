@@ -1,18 +1,18 @@
 /// Data cleaning part
-0. git clone the repo
-1. mkdir data
-1.4 download raw folder
-1.5 put raw into data folder
-1.6 run .Rprofile
-1.65 (if missing required package) renv::restore()
-1.7. run rsrc/masterfile_all.R
+1. git clone the repo
+2. mkdir data
+3. download raw folder
+4. put raw into data folder
+5. run .Rprofile
+6. (if missing required package) renv::restore()
+7. run rsrc/masterfile_all.R
 
 
 
-2 installation instruction 1 to 4
+8. installation instruction 1 to 4
 
-3. python pysrc/sampling/baseline.py 
-4. python pysrc/sampling/baseline.py --sites 78 
+9. python pysrc/sampling/baseline.py 
+10. python pysrc/sampling/baseline.py --sites 78 
 
 output: output/tables/gamma_percentiles_78.csv 
 	output/tables/theta_percentiles_78.csv 
@@ -24,8 +24,8 @@ output: output/tables/gamma_percentiles_78.csv
 
 
 //// Figure 2 and Figure 3, Figure 4
-5. run rsrc/analysis/calibration_maps_78_sites.R
-6. run rsrc/analysis/calibration_maps_1043_sites.R
+11. run rsrc/analysis/calibration_maps_78_sites.R
+12. run rsrc/analysis/calibration_maps_1043_sites.R
 
 output: plots/calibration/1043SitesModel/map_z2017_1043Sites.png
 	plots/calibration/1043SitesModel/map_x2017_1043Sites.png
@@ -37,14 +37,14 @@ output: plots/calibration/1043SitesModel/map_z2017_1043Sites.png
 
 
 /// Table 1
-7. python pysrc/bash/shadow_price.py  (xi=1,5,10,1000 id =20...70) or use bash bash_files/shadow_price.sh
+13. python pysrc/bash/shadow_price.py  (xi=1,5,10,1000 id =20...70) or use bash bash_files/shadow_price.sh
 
 
 
 
 
 /// Figure 5, Figure 6, Table 2, Table 3, Table 4, Table 13
-8. python scripts/conduction_det.py
+14. python scripts/conduction_det.py
 
 output: output/tables/present_value_site1043_pa41.11_det.tex
 	output/tables/present_value_site78_pa41.11_det.tex
@@ -59,21 +59,21 @@ output: output/tables/present_value_site1043_pa41.11_det.tex
 
 /// Figure 7,8 
 
-8.1 R rsrc/analysis/map_1043_det.R
+15. R rsrc/analysis/map_1043_det.R
 output: plots/1043-det/map_z0z30GammaTheta_1043Sites_allPrices_det.png
 	plots/1043-det/map_zDecades_1043Sites_pe21.6_det.png
 
 
 
 /// hmc 
-9. python pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee} (or use bash bash_files/hmc_sampling.sh)
+16. python pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee} (or use bash bash_files/hmc_sampling.sh)
 
 
-10. python pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee} (or use bash_files/relative_entropy.sh)
+17. python pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee} (or use bash_files/relative_entropy.sh)
 
 
 
-10.1 python scripts/conduction_hmc.py
+18. python scripts/conduction_hmc.py
 
 output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 4)
 	output/tables/present_value_site_ambiguity_comparison_xi_1.0.tex (Table 16)
@@ -97,17 +97,17 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 
 
-11. bash bash_files/mpc_prepare.sh	 
+19. bash bash_files/mpc_prepare.sh	 
 
-12. bash bash_files/mpc_hmc_sp.sh
+20. bash bash_files/mpc_hmc_sp.sh
 
-13. python pysrc/mpc/mpc_compute_sp.py
+21. python pysrc/mpc/mpc_compute_sp.py
 
-14. bash bash_files/mpc_hmc.sh
+22. bash bash_files/mpc_hmc.sh
 
-15. python pysrc/mpc/mpc_compute.py
+23. python pysrc/mpc/mpc_compute.py
 
-16. python scripts/mpc_trajectory.py
+24. python scripts/mpc_trajectory.py
 
 
 
@@ -116,7 +116,7 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 
 //Table 10,11 and Figure 15
-A.1 python scripts/price_estimation.py 
+25. python scripts/price_estimation.py 
 
 output: output/tables/hmm_results_table.tex
 	output/tables/hmm_information_criteria
@@ -125,13 +125,13 @@ output: output/tables/hmm_results_table.tex
 
 
 
-A.2 R rsrc/analysis/map_1043_hmc_xi05.R
+26. R rsrc/analysis/map_1043_hmc_xi05.R
     R rsrc/analysis/map_1043_hmc_xi1.R
 output: plots/1043-hmc_xi5/map_zDecades_1043Sites_pe19.5_hmc.png (Figure 18)
 	plots/1043-hmc_xi1/map_zDecades_1043Sites_pe17.2_hmc.png (Figure 19)
 
 
-A.3 python scripts/bayesian_R2.py
+27. python scripts/bayesian_R2.py
 
 
 
