@@ -73,12 +73,10 @@ renv::restore()
 rsrc/masterfile_all.R
 ```
 
----
-
 
 8. Follow installation instructions (steps 1 to 4)
 
----
+
 
 
 9. Run the baseline script:
@@ -91,7 +89,7 @@ python pysrc/sampling/baseline.py
 python pysrc/sampling/baseline.py --sites 78
 ```
 
----
+
 
 11. Run:
 ```R
@@ -103,7 +101,7 @@ rsrc/analysis/calibration_maps_78_sites.R
 rsrc/analysis/calibration_maps_1043_sites.R
 ```
 
----
+
 
 13. Run:
 ```bash
@@ -114,7 +112,7 @@ Or:
 bash bash_files/shadow_price.sh
 ```
 
----
+
 
 
 14. Run:
@@ -122,14 +120,14 @@ bash bash_files/shadow_price.sh
 python scripts/conduction_det.py
 ```
 
----
+
 
 15. Run:
 ```R
 rsrc/analysis/map_1043_det.R
 ```
 
----
+
 
 16. Run:
 ```bash
@@ -153,8 +151,6 @@ bash bash_files/relative_entropy.sh
 ```bash
 python scripts/conduction_hmc.py
 ```
-
----
 
 
 19. Prepare MPC structure:
@@ -186,9 +182,6 @@ python pysrc/mpc/mpc_compute.py
 ```bash
 python scripts/mpc_trajectory.py
 ```
-
----
-
 
 25. Run:
 ```bash
