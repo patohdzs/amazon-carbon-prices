@@ -204,7 +204,7 @@ rsrc/analysis/map_1043_hmc_xi1.R
 27. Run:
 ```bash
 python scripts/bayesian_R2.py
-
+```
 
 
 ## Contributing
