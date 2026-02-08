@@ -14,16 +14,8 @@ model_2 <- df %>%
   filter(last_pq != 0) %>%
   lm(ratio ~ 0 + factor(age):factor(last_pq), data = .)
 
-# Fit regression interacting with mean percipitation
-model_3 <- df %>%
-  lm(ratio ~ 0 + factor(age) + factor(age):percip, data = .)
-
-# Fit regression interacting with last pasture quality
-model_4 <- df %>%
-  lm(ratio ~ 0 + percip + factor(age), data = .)
-
-stargazer(model_1, model_2, model_3, out = "plots/gamma_alpha/table_1.tex")
-stargazer(model_1, model_2, model_3, out = "plots/gamma_alpha/table_1.txt")
+stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.tex")
+stargazer(model_1, model_2, out = "plots/gamma_alpha/table_1.txt")
 
 # Get coefficients
 coefs <- coef(model_1)[paste0("factor(age)", 2:32)]
