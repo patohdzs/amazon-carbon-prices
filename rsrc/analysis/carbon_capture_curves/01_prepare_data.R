@@ -69,8 +69,11 @@ for (i in seq_along(chunks)) {
       gamma = gam_vals[valid]
     )
   }
+  rm(agb_vals, sec_vals, gam_vals) # to free memory, very heavy job!
+  if (i %% 100 == 0) gc()
 }
 
+combined_list <- combined_list[!sapply(combined_list, is.null)]
 combined_df <- do.call(rbind, combined_list)
 rm(combined_list)
 gc()
