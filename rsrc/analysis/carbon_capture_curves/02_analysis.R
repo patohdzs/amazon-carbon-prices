@@ -1,27 +1,14 @@
-# ============================================================================
-# Script: 02_analysis.R
-# Purpose: Run regression analyses and create visualizations for AGB ratios
-# ============================================================================
+# Carbon capture curve: ratio = agb/gamma by age
 
-# Load libraries ----------------------------------------------------------
 library(tidyverse)
 library(ggplot2)
 
-# Load data ---------------------------------------------------------------
-load("data/calibration/combined_df.Rdata")
+load("data/calibration/carbon_capture_curves/combined_df.Rdata")
 
-# Prepare data ------------------------------------------------------------
-
-# Filter and create ratio variable
 combined_df <- combined_df %>%
-  filter(!is.na(agb) & !is.na(sec) & !is.na(gamma)) %>%
+  filter(!is.na(agb) & !is.na(sec) & !is.na(gamma), sec <= 30) %>%
   mutate(ratio = agb / gamma)
 
-# Create version with pasture quality filter (for potential future use)
-combined_df_pq <- combined_df %>%
-  filter(pq != 0)
-
-# Helper function to generate dummy variables -----------------------------
 generate_dummies <- function(df, sec_var = "sec", max_sec = 32) {
   for (i in 1:max_sec) {
     dummy_name <- paste0("dummy_", i)
@@ -30,59 +17,29 @@ generate_dummies <- function(df, sec_var = "sec", max_sec = 32) {
   }
   return(df)
 }
+combined_df <- generate_dummies(combined_df, max_sec = 30)
 
-# Generate dummy variables
-combined_df <- generate_dummies(combined_df, max_sec = 32)
-
-# Model 1: Without intercept (coefficients for all dummies 1-32) ---------
-cat("\n=== MODEL 1: WITHOUT INTERCEPT ===\n")
-
-no_intercept_formula <- as.formula(paste("ratio ~ -1 +", paste(paste0("dummy_", 1:32), collapse = " + ")))
+no_intercept_formula <- as.formula(paste("ratio ~ -1 +", paste(paste0("dummy_", 1:30), collapse = " + ")))
 no_intercept_model <- lm(no_intercept_formula, data = combined_df)
-print(summary(no_intercept_model))
+summary(no_intercept_model)
 
-# Extract coefficients for plotting
-coef_no_intercept <- coef(no_intercept_model)[paste0("dummy_", 1:32)]
-stderr_no_intercept <- summary(no_intercept_model)$coefficients[paste0("dummy_", 1:32), "Std. Error"]
+coef_no_intercept <- coef(no_intercept_model)[paste0("dummy_", 1:30)]
+stderr_no_intercept <- summary(no_intercept_model)$coefficients[paste0("dummy_", 1:30), "Std. Error"]
 
 no_intercept_coefficients_df <- data.frame(
-  dummy = 1:32,
+  dummy = 1:30,
   coefficient = coef_no_intercept,
   lower_bound = coef_no_intercept - stderr_no_intercept,
   upper_bound = coef_no_intercept + stderr_no_intercept,
-  type = "Coefficients"
+  type = "Estimates from data"
 )
-
-# Model 2: With intercept (coefficients for dummies 2-32) ----------------
-cat("\n=== MODEL 2: WITH INTERCEPT ===\n")
-
-with_intercept_formula <- as.formula(paste("ratio ~", paste(paste0("dummy_", 2:32), collapse = " + ")))
-with_intercept_model <- lm(with_intercept_formula, data = combined_df)
-print(summary(with_intercept_model))
-
-# Extract coefficients for plotting
-coef_with_intercept <- coef(with_intercept_model)[paste0("dummy_", 2:32)]
-stderr_with_intercept <- summary(with_intercept_model)$coefficients[paste0("dummy_", 2:32), "Std. Error"]
-
-with_intercept_coefficients_df <- data.frame(
-  dummy = 2:32,
-  coefficient = coef_with_intercept,
-  lower_bound = coef_with_intercept - stderr_with_intercept,
-  upper_bound = coef_with_intercept + stderr_with_intercept,
-  type = "Coefficients"
-)
-
-# Create theoretical function for comparison ------------------------------
-x_values <- 0:32
-theoretical_values <- 1 - exp(-0.045 * x_values)
 
 theoretical_df <- data.frame(
-  dummy = x_values,
-  coefficient = theoretical_values,
+  dummy = 0:30,
+  coefficient = 1 - exp(-0.045 * (0:30)),
   type = "Theoretical Function"
 )
 
-# Plot 1: Without intercept -----------------------------------------------
 no_intercept_plot_df <- bind_rows(no_intercept_coefficients_df, theoretical_df)
 
 p1 <- ggplot(no_intercept_plot_df, aes(x = dummy, y = coefficient, color = type, linetype = type)) +
@@ -94,66 +51,11 @@ p1 <- ggplot(no_intercept_plot_df, aes(x = dummy, y = coefficient, color = type,
     width = 0.2
   ) +
   geom_line(data = theoretical_df, linewidth = 1) +
-  labs(
-    title = "Coefficients of Dummy Variables with Theoretical Function (No Intercept)",
-    x = "Dummy Variable Index (age)",
-    y = "Coefficient Value",
-    color = "Legend",
-    linetype = "Legend"
-  ) +
-  scale_color_manual(values = c("Coefficients" = "black", "Theoretical Function" = "blue")) +
-  scale_linetype_manual(values = c("Coefficients" = "solid", "Theoretical Function" = "dashed")) +
+  labs(x = "Age of Secondary Forest", y = "Percentage") +
+  scale_color_manual(values = c("Estimates from data" = "black", "Theoretical Function" = "blue")) +
+  scale_linetype_manual(values = c("Estimates from data" = "solid", "Theoretical Function" = "dashed")) +
+  guides(color = guide_legend(title = NULL), linetype = guide_legend(title = NULL)) +
   theme_minimal() +
   theme(legend.position.inside = c(0.85, 0.15))
 
-ggsave("results/carbon_capture/coefficients_plot.png",
-  plot = p1, width = 8, height = 6
-)
-cat("\nPlot saved: coefficients_plot.png\n")
-
-# Plot 2: With intercept --------------------------------------------------
-with_intercept_plot_df <- bind_rows(with_intercept_coefficients_df, theoretical_df)
-
-p2 <- ggplot(with_intercept_plot_df, aes(x = dummy, y = coefficient, color = type, linetype = type)) +
-  geom_point(data = with_intercept_coefficients_df) +
-  geom_line(data = with_intercept_coefficients_df) +
-  geom_errorbar(
-    data = with_intercept_coefficients_df,
-    aes(ymin = lower_bound, ymax = upper_bound),
-    width = 0.2
-  ) +
-  geom_line(data = theoretical_df, linewidth = 1) +
-  labs(
-    title = "Coefficients of Dummy Variables with Theoretical Function (With Intercept)",
-    x = "Dummy Variable Index (age)",
-    y = "Coefficient Value",
-    color = "Legend",
-    linetype = "Legend"
-  ) +
-  scale_color_manual(values = c("Coefficients" = "black", "Theoretical Function" = "blue")) +
-  scale_linetype_manual(values = c("Coefficients" = "solid", "Theoretical Function" = "dashed")) +
-  theme_minimal() +
-  theme(legend.position.inside = c(0.85, 0.15))
-
-ggsave("results/carbon_capture/coefficients_plot_with_intercept.png",
-  plot = p2, width = 8, height = 6
-)
-cat("Plot saved: coefficients_plot_with_intercept.png\n")
-
-# Parametric models using theoretical function ---------------------------
-
-# Add theoretical predictor variable
-combined_df <- combined_df %>%
-  mutate(Tp = 1 - exp(-0.045 * sec))
-
-# Parametric model 1: With intercept
-cat("\n=== PARAMETRIC MODEL 1: WITH INTERCEPT ===\n")
-parametric_intercept_model <- lm(ratio ~ Tp, data = combined_df)
-print(summary(parametric_intercept_model))
-
-# Parametric model 2: Without intercept
-cat("\n=== PARAMETRIC MODEL 2: WITHOUT INTERCEPT ===\n")
-parametric_no_intercept_model <- lm(ratio ~ -1 + Tp, data = combined_df)
-print(summary(parametric_no_intercept_model))
-
-cat("\nAnalysis complete!\n")
+ggsave("output/figures/carbon_capture/gamma_secondary_vegetation.png", plot = p1, width = 8, height = 6)
