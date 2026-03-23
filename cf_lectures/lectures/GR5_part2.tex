@@ -1,0 +1,1008 @@
+\documentclass[compress]{beamer}
+%\usepackage{graphicx}
+\usepackage{epsfig}
+\usepackage{pstricks,pst-plot}
+\usepackage{mathpazo}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsmath,amssymb,amsthm,enumerate,graphicx}
+\usepackage{ifthen,latexsym,syntonly}
+\usepackage{cases}
+\usepackage{setspace}
+\usepackage{mathabx}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{float}
+\usepackage{epstopdf}
+\usepackage{mathabx}
+\usepackage{color}
+\usepackage{calc,xspace}
+\usepackage{bibentry}
+\usepackage{multirow}
+\usepackage{graphicx}
+%\usepackage{subcaption}
+%\usepackage[stable]{footmisc}
+\setcounter{MaxMatrixCols}{10}
+\usepackage{soul}
+\usepackage{comment}
+\usepackage{threeparttable}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{subfig}
+\makeatletter
+\let\@@magyar@captionfix\relax
+\makeatother
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\ept}{{\rm E}}
+\newcommand{\ep}{{\rm e}}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bq}{\begin{eqnarray}}
+\newcommand{\eq}{\end{eqnarray}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\bc}{\begin{center}}
+\newcommand{\ec}{\end{center}}
+\renewcommand{\i}{\item}
+\newcommand{\bnm}{\begin{enumerate}}
+\newcommand{\enm}{\end{enumerate}}
+\newcommand{\bfr}{\begin{frame}[allowframebreaks]}
+\newcommand{\efr}{\end{frame}}
+\newcommand{\fmt}[1]{\frametitle{\bc{#1}\ec}}
+\newcommand{\Tr}{{\mathrm Tr}}
+\newtheorem{remark}{Remark}
+
+\usetheme{Hannover}
+%\usetheme{Berkeley}
+%\usetheme{Bergen}
+%\usetheme{Boadilla}
+%\usetheme{Singapore}
+%\usetheme{Malmoe}
+\usecolortheme[rgb={0,0,1}]{structure}
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+\newcommand{\JS}[1]{{\color{red}{#1}}}
+\newcommand{\PH}[1]{{\color{red}{#1}}}
+
+%\bibliographystyle{plainnat}
+\setbeamercovered{transparent}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate {footline}
+{\quad\strut\insertframenumber/\inserttotalframenumber\strut\quad}
+
+%\setbeamertemplate {footline}{\quad\strut\insertframenumber}{\inserttotalframenumber\strut\quad}
+\title[Climate Finance]{Climate Finance}
+\author[Jos\'e Scheinkman]{Jos\'e A. Scheinkman}
+\institute[Columbia University]{Columbia University}
+
+\date[Climate Finance]{PhD course, Spring 2026}
+\setbeamertemplate{navigation symbols}{}
+
+
+
+  
+%\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate {footline}
+{\quad\strut\insertframenumber/\inserttotalframenumber\strut\quad}
+
+\begin{document}
+\maketitle
+\section{Results}
+
+
+
+
+\begin{frame}\fmt{Parameter uncertainty}
+\bi \i Hamiltonian Monte Carlo 
+\i 1043 sites
+\i $\xi=1$ 
+\i $P^{ee}=4.7$
+\i $P^{ee}$ monotone increasing (decreasing) on $\xi$ (ambiguity aversion)
+\ei
+
+NEXT TWO SLIDES ARE FROM FIGURE 8
+\end{frame}
+
+\begin{frame}{Ambiguity adjustment, $b=\$0,$ $P^a =P^{s}$}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+\includegraphics[width=\linewidth]{figures/theta_distribution_916_b0.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+\includegraphics[width=\linewidth]{figures/gamma_distribution_817_b0.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Ambiguity adjustment, $b=\$15,$ $P^a =P^{s}$}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+\includegraphics[width=\linewidth]{figures/theta_distribution_1021_b15.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+\includegraphics[width=\linewidth]{figures/gamma_distribution_938_b15.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{Ambiguity adjustment, $b=15,$ $P^a =P^{s}$}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+\includegraphics[width=\linewidth]{figures/aux_input/theta_distribution_78.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+\includegraphics[width=\linewidth]{figures/aux_input/gamma_distribution_78.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+\end{comment}
+
+\begin{frame}{Evolution of agricultural area: productivity ambiguity, $P^a =P^{s}$}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth} 
+    \centering
+    \includegraphics[width=1.1\linewidth]{figures/aggregate_percentage_Z_b0_pehmc_4.5_pedet_6.6.png}
+    \vspace{-10pt}
+    \caption*{(a) b=\$0}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=1.1\linewidth]{figures/aggregate_percentage_Z_b15_pehmc_19.5_pedet_21.6.png}
+    \vspace{-10pt}
+    \caption*{(b) b=\$15}
+\end{minipage}
+\vspace{-10pt}
+%\caption{Evolution of agricultural area under ambiguity neutrality and ambiguity aversion, using the corresponding shadow prices.  }
+\label{aggz-hmc-1043}
+\end{figure}
+
+\end{frame}
+
+
+
+
+\begin{comment}
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1.0}
+\begin{figure}[H]
+\centering
+\begin{minipage}{\linewidth} % choose width suitably
+\includegraphics[width=9.5cm]{figures/aux_input/z_2017_gridless.png}
+\end{minipage}
+
+\end{figure}
+\end{frame}
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2018_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2018_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2019_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2019_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure} 
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2020_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2020_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure} 
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2021_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2021_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure} 
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2022_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2022_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2023_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2023_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2024_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2024_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2025_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2025_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2026_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2026_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2027_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2027_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure} 
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2028_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2028_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2029_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2029_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2030_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2030_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2031_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2031_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2032_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2032_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}  
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2033_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2033_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure} 
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+    \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2034_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2034_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+  \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2035_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2035_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}  
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2036_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2036_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Land allocation dynamics: productivity ambiguity}
+\transduration{1}
+
+   \begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} \centering
+  \includegraphics[width=\linewidth]{figures/aux_input/map_z2037_25Sites_xinoAmbiguity_pe20_delta0_02.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}  \centering
+          \includegraphics[width=\linewidth]{figures/aux_input/map_z2037_25Sites_xi0.35_pe20_delta0_02.png}
+\end{minipage}
+\end{figure}
+\end{frame}
+\end{comment}
+
+\begin{comment}
+\begin{frame}{Year of maximal reforestation in site $i$ ($b=15$)}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth} 
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/aux_input/map_78site_unc_spike_b15.png}
+    \caption*{ambiguity}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/aux_input/map_78site_det_spike_b15.png}
+    \caption*{no ambiguity}
+\end{minipage}
+\end{figure}
+
+\end{frame} 
+\end{comment}
+
+\begin{frame}{Year of maximal re/deforestation}
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth} 
+    \centering
+    \includegraphics[width=\linewidth]{figures/decision_histogram_b_0_adjust.png}
+    \vspace{-10pt}
+    \caption*{(a) b=\$0}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/decision_histogram_b_15_adjust.png}
+    \vspace{-10pt}
+    \caption*{(b) b=\$15}
+\end{minipage}
+\vspace{-10pt}
+%\caption{Histogram of the years in which one of the two controls is maximal, $P^{ee} = 6.6$ for ambiguity neutral and $P^{ee} = 4.5$ for ambiguity averse. For \( b = \$0 \), 12.4\% of the sites remain unchanged under ambiguity neutrality, while 15.1\% do so under ambiguity aversion. For \( b = \$15 \), 2.0\% of the sites do not change under ambiguity neutrality, and 2.7\% remain unchanged under ambiguity aversion.}
+\label{map_adjusted_combine}
+\end{figure}
+\bi
+\i For \( b = \$0 \), 12\% of the sites remain unchanged under ambiguity neutrality, while 15\% do so under ambiguity aversion.
+\i For \( b = \$15 \), 2\% of the sites do not change under ambiguity neutrality, and 3\% remain unchanged under ambiguity aversion.
+\ei
+    
+\end{frame}
+
+\begin{frame}\fmt{Planner Value Decomposition (200 years)}
+
+\begin{table}[H]
+\centering
+\scalebox{0.7}{
+\begin{threeparttable}
+    \input{figures/valueObjectiveDecomposition_1043Sites_hmc}
+\begin{tablenotes}[flushleft] 
+\item \footnotesize \textbf{Notes}:  $P^a=\$41.11$, the average price under the stationary distribution. Forest services are calculated using baseline shadow price ($b=\$0$).
+\end{tablenotes}
+\end{threeparttable}}
+\end{table}\end{frame}
+
+\begin{frame}\fmt{Transfer cost (30 years)}
+
+\begin{table}[H]
+\centering
+\scalebox{0.65}{
+\begin{threeparttable}
+    \input{figures/transfersCost_78Sites_hmc_y30}
+\begin{tablenotes}[flushleft] 
+\item \footnotesize \textbf{Notes}: Agricultural price $P^a =  \$41.11$, which is the mean of the agricultural price in the stationary distribution.
+\end{tablenotes}
+\end{threeparttable}}
+\end{table}\end{frame}
+
+\begin{comment}
+\begin{frame}
+\fmt{Interactions across sites}
+\bi
+\i \cite{AAHS23}
+\i  50\% of moisture in  Amazon  transmitted from trees-trees via atmospheric transportation  \i Wind direction and speed change. 
+\i Contruct historical back trajectories and use this information to ``identify'' effect of Leaf Area Index shock in one pixel (25 km x 25 km) to other pixels. 
+\i On average, deforestation has a ``multiplier' of 2.05.
+\ei
+\end{frame}
+\end{comment}
+
+\begin{comment}
+
+\section{Interactions across sites}
+\begin{frame}
+\fmt{Interactions across sites}
+\bi
+\i \cite{AAHS23}.
+\i Amazon produces large fraction of its own rainfall
+\i Rainfall $\rightarrow$ trees' transpiration $\rightarrow$ recharges atmospheric humidity $\rightarrow$ humidity moves downwind $\rightarrow$ rainfall.
+\i Less trees $\rightarrow$ less water. Deforestation $\rightarrow$ degradation.
+\i Mapping transport of water: atmospheric trajectories 
+\i Use variations in back trajectories to estimate impact of upwind Leaf Area Index (LAI) on downwind LAI
+\i On average, deforestation has a ``multiplier" of 2.05.
+\i Additional externality
+\ei
+\end{frame}
+\begin{frame}{Multiplier Effect: \bf{A}: total effect of pixels; \bf{B}: total effect on pixels.}
+
+\begin{figure}[H] 
+\centering
+\begin{minipage}{1\textwidth} \centering
+    \includegraphics[scale=0.35]{figures/aux_input/TP effect_affect.png} 
+\end{minipage}%
+\end{figure}
+\end{frame} 
+
+\begin{frame}{Transboundary Cascading Effects}
+
+\begin{figure}[H] 
+\centering
+\begin{minipage}{1\textwidth} \centering
+    \includegraphics[scale=0.35]{figures/aux_input/TP Transboundary Cascading Effects.png} 
+\end{minipage}%
+\end{figure}
+\bi
+\i Rondônia: one of the most active frontiers of deforestation
+\i 17 pixels (25km x 25km) in Rondônia, which are among the highest 50\% deforested pixels in the biome. 
+\i Deforestation causes degradation as far as Bolivia
+\i Deforestation multiplier of 1.87.
+\ei
+\end{frame} 
+    
+\end{comment}
+
+
+\section{Conclusion}
+\begin{frame}  
+\fmt{Conclusions}\vspace{-12pt}
+\bi
+\i Posed  explicit dynamic model across heterogeneous regions in  Amazon to assess  potential adverse impact of deforestation. 
+\i  Rich panel data set
+\i Computational challenge because the heterogeneity of subregions requires large number of state variables and  state-constraints that bind at optimum.
+\bi \i Parameter uncertainty \ei
+\i With modest prices for CO2e, Brazilian Amazon would produce noticiable CO$_2$ capture.
+\bi \i Compared to IPCC budget \i Compared to \cite{griscom2017natural} that identify
+and quantify ``natural climate solutions'' (NCS).   \ei  \i Interactions across sites make predicted path under ``business as usual'' even more perilous. \ei \end{frame}
+\begin{comment}
+\begin{frame}  
+\fmt{To add}
+\bi \i Incentive for planner not to break contract\i Effect of Amazon deforestation on rainfall in Amazon and other regions.
+\i Local tipping points
+\i Other tropical forests.
+\ei\end{frame}
+\end{comment}
+
+
+
+%%%% ADDITIONAL SLIDES ON HMC AND CONJUGATE PRIORS
+\begin{comment}
+\begin{frame}{Conjugate priors for baseline $\pi$}
+\PH{OLD SLIDE}
+\bi
+\i To construct Bayesian posteriors for the baseline $\pi(\rho)$, we first specify a model likelihood and prior distribution.
+\i We use a weighted regression model with a Gaussian error term for agricultural productivity:
+\begin{equation}\label{eq:muni_likelihood}
+   Y_\theta  \;=\; R_\theta\beta_\theta + \varepsilon_\theta, \quad \varepsilon_\theta \sim \mathcal{N}(0,\, \sigma_\theta^2 W_\theta ^{-1}),
+\end{equation}
+\i The model for $\beta_\gamma$ is analogous, with $W_\gamma = I$.
+
+\i We assume that the priors for parameters $(\beta_\theta, \sigma_\theta^2)$ take normal-inverse gamma form:
+\begin{equation*}
+    \beta_\theta |  \sigma_\theta^2  \sim \mathcal{N}(m_0, \sigma_\theta^2 Q_0^{-1}), \quad \sigma_\theta^2 \sim \textrm{Inv-Gamma}(a_0,\, b_0),
+\end{equation*}
+
+\ei
+\end{frame}
+
+\end{comment}
+
+\begin{comment}
+    
+\begin{frame}{Deriving posteriors for baseline $\pi$}
+\PH{OLD SLIDE}
+\bi
+
+\i Then Bayesian posteriors belong to the same family of distributions, and take the form:
+\begin{equation*}
+    \beta_\theta |  \sigma_\theta^2  \sim \mathcal{N}(m, \sigma_\theta^2 Q^{-1}), \quad \sigma_\theta^2 \sim \textrm{Inv-Gamma}(a,\, b),
+\end{equation*}
+where:
+\begin{align*}
+    Q & = R_\theta' W_\theta R_\theta + Q_0, \cr
+    m & = Q^{-1} (R_\theta' W_\theta y_\theta + Q_0m_0), \cr
+    a & = a_0+\frac{n}{2}, \cr
+    b & = b_0+\frac{1}{2}(y_\theta' W_\theta y_\theta + m_0' Q_0 m_0- m'Qm),
+\end{align*}
+\i By setting prior inputs to the limit cases $Q_0 = 0, m_0 = 0, a_0 = b_0 = 0$ we get improper uniform priors over $(\beta_\theta, \sigma_\theta^2)$ and recover familiar regression statistics for posteriors.
+
+\ei
+\end{frame}
+
+\end{comment}
+\begin{frame}[allowframebreaks]\fmt{Deriving posteriors for baseline $\pi$}
+\bi \i We consider the random effects regression models for $\theta$ and $\gamma$ separately. 
+\i Given observations $i=1,\ldots, N$ and groups $b=1,\ldots, B$, we  using the following specification:
+\begin{equation}\label{eq:regression_general}
+Y = R\beta +Z\nu +U
+\end{equation}
+where the observed outcome $Y$ is N-dimensional, $\beta$ is $K$ dimensional, the group indicator matrix $Z$  is $N \times B$ dimensional, and the vector of random coefficients $\nu$ is B-dimensional. 
+\i 
+$$
+U \sim \textrm{Normal} \left(0, \frac{1}{\eta}\Sigma \right),
+$$
+$\Sigma$ is a  diagonal matrix. 
+\i Set $W$ be such that $WW'=\Sigma^{-1}$.
+\i We transform \eqref{eq:regression_general} by pre-multiplying  by $W$. 
+\i $$
+WY | W,R,Z,\beta,\nu,\eta \sim \textrm{Normal}\left( WR \beta+WZ\nu, \  \frac{1}{\eta} I \right).
+$$
+\i Impose normal priors on both vectors of coefficients including the random effects, with precision parameters $\eta$ and $\zeta$, respectively:
+\[
+\begin{bmatrix} \beta \cr \nu \end{bmatrix} \mid \eta, \zeta  \sim \textrm{Normal} \left(
+\begin{bmatrix} 0 \cr 0 \end{bmatrix}, \begin{bmatrix} \frac 1 \eta \Omega^{-1} & 0 \cr 0 &
+I \end{bmatrix} \right)
+\]
+\i Posterior is  
+\[
+\begin{bmatrix} \beta \cr \nu \end{bmatrix} \mid R, Z, \eta, \zeta  
+\] 
+as normal with mean
+\begin{equation} \label{posterior_mean}
+\begin{bmatrix} \eta R'\Sigma^{-1} R  & \eta R'\Sigma^{-1} Z
+\cr \eta Z' \Sigma^{1} R & \eta Z'\Sigma^{-1} Z + \zeta I \end{bmatrix}^{-1} \begin{bmatrix} \eta R' \Sigma^{-1} Y \cr \eta Z' \Sigma^{-1}Y \end{bmatrix}   
+\end{equation}
+and covariance matrix 
+\begin{equation} \label{posterior_covariance}
+ \begin{bmatrix} \eta R'\Sigma^{-1} R  & \eta R'\Sigma^{-1} Z
+\cr \eta Z' \Sigma^{1} R & \eta Z'\Sigma^{-1} Z + \zeta I \end{bmatrix}^{-1} 
+\end{equation}
+where we take limits as $\Omega$ tends to zero.  
+
+Finally impose improper uniform priors on $\log(\eta)$ and $\log(\zeta)$ and thus the implied  improper prior for $\eta$ and $\zeta$ is:
+\[
+\eta^{-1} \zeta^{-1} 
+\]
+Incorporating this, gives the implied logarithm of the density for $\eta$ and $\zeta.$
+\begin{equation} \label{marginal_posterior}
+\begin{split}
+& \frac {N-2}  2 \log\eta + \frac K 2 \log\eta + \frac {B - 2}  2 \log \zeta
+- {\frac 1 2} \log  \det  \begin{bmatrix} \eta R'\Sigma^{-1} R   & \eta  R' \Sigma^{-1} Z \cr \eta Z'\Sigma^{-1} X & \eta Z'Z + \zeta  {\mathbb I} \end{bmatrix} \cr
+& - \frac \eta 2 R'\Sigma^{-1} R + \frac 1 2
+\begin{bmatrix} \eta Y' \Sigma^{-1} R   \eta Y' \Sigma^{-1} Z \end{bmatrix}
+\begin{bmatrix} \eta R'\Sigma^{-1}R    \eta  R'\Sigma^{-1} Z \cr \eta Z'\Sigma^{-1} X  \eta Z'\Sigma^{-1}Z + \zeta  {\mathbb I} \end{bmatrix}^{-1} \begin{bmatrix} \eta R'\Sigma^{-1}Y \cr  \eta Z'\Sigma^{-1} Y \end{bmatrix}
+\end{split}
+\end{equation}
+
+
+One way we produce the baseline posterior probabilities for the parameters of interest is first to random sample of  $(\eta,\zeta)$'s  numerically using the exponential the expression in \eqref{marginal_posterior}.   Next draw a corresponding sample of regressions coefficients using a normal distribution with mean \eqref{posterior_mean} and covariance matrix \eqref{posterior_covariance}.   Appendix \ref{sec:HMC}, which includes an adjustment for ambiguity aversion, provides a second way in the limiting case in which $\xi = \infty.$
+
+
+
+
+
+
+
+In the following tables, we present quantiles for the posterior distributions described above:
+
+\begin{table}[H]
+\caption{Quantiles for $\theta$ posterior estimation}
+\vspace{-12pt}
+\centering
+\scalebox{1}{
+\begin{threeparttable}
+    \input{figures/aux_input/theta_coefficient}
+\end{threeparttable}}
+\label{tab:theta_estimation}
+\end{table}
+
+\begin{table}[H]
+\caption{Quantiles for $\gamma$ posterior estimation}
+\vspace{-12pt}
+\centering
+\scalebox{1}{
+\begin{threeparttable}
+    \input{figures/aux_input/gamma_coefficient}
+\end{threeparttable}}
+
+\label{tab:gamma_estimation}
+\end{table}
+
+\begin{table}[H]
+\caption{Quantiles for $\sigma$ posterior estimation}
+\vspace{-12pt}
+\centering
+\scalebox{1}{
+\begin{threeparttable}
+    \input{figures/aux_input/sigma_quantiles}
+\end{threeparttable}}
+
+\label{tab:sigma_quantiles}
+\end{table}
+
+In Figure \ref{fig:bayesian_R2} we report Bayesian R-squared for the regression equations, computed following the methodology of \cite{gelman2019r}.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth} 
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/aux_input/bayesian_r2_gamma_1043.png}
+    % \caption*{(a) $\gamma$}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/aux_input/bayesian_r2_theta_1043.png}
+    % \caption*{(b) $\theta$}
+\end{minipage}
+\vspace{-10pt}
+\caption{The densities of Bayesian $R^2$ for the regression equations we use to recover the  $\gamma^i$'s  and $\theta^i$.} 
+\label{fig:bayesian_R2}
+\end{figure}
+
+In what follows, let $\log {\mathcal L}(Y \mid R, Z, \rho)$ denote the log-likelihood function, $\pi (\rho)$ the baseline prior density.  
+
+    \bi\i Implement ``similar''  random effects regression models for $\theta$ and $\gamma$ separately. 
+    \i Given observations $i=1,\ldots, N$ and groups $b=1,\ldots, B$ set:
+\begin{equation}\label{eq:regression_general}
+Y = R\beta +Z\nu +U
+\end{equation}
+Where  observed outcome $Y$ is N-dimensional,  vector of coefficients $\beta$ is $K$ dimensional,  group indicator matrix $Z$  is $N \times B$ dimensional, and vector of random coefficients $\nu$ is B-dimensional. \i
+$$
+U \sim \textrm{Normal} \left(0, \frac{1}{\eta}\Sigma \right),
+$$
+ $\Sigma$ diagonal matrix.
+ \i Let t $W$ be such that $WW'=\Sigma^{-1}$.
+ \i Thus 
+$$
+WY | W,R,Z,\beta,\nu,\eta \sim \textrm{Normal}\left( WR \beta+WZ\nu, \  \frac{1}{\eta} I \right).
+$$
+
+$$
+\beta \mid \eta, \zeta  \sim \textrm{Normal} \left(0, \frac 1 \eta \Omega^{-1}\right), \quad \nu \mid \eta, \zeta \sim \textrm{Normal} \left( 0, \frac 1 \zeta I \right).
+$$
+
+\i Impose improper uniform priors on $\log(\eta)$ and $\log(\zeta)$, and take  limit as $\Omega\to 0$. 
+\i We can then sample from the posterior density, which is proportional to the model-implied likelihood and our choice of priors:
+\begin{equation}
+\label{baseline-distribution}
+    {\overline \pi}(\rho \mid W, R, Y, Z) \ \propto \ {\mathcal L}(Y|W, R, Z, \rho) \pi(\rho ),
+\end{equation}
+\i For $\theta$ , observations are municipalities, groups are Amazonian water basins, $y_i$ is the log-value of cattle/hectare, and weights are the 2017 pasture area in each municipality. 
+For  $\gamma$ , observations are fine (1043) sites, groups are coarse sites, $y_i$ is the average log-CO$_2$ density in each site $i$, and $W = I$. 
+\ei \end{frame}
+
+
+% We assume diffuse priors over the parameter vector $(\beta, \eta, \nu, \tau)$ and sample posterior distributions using the following Gibbs sampling routine:
+
+% \begin{itemize}
+%     \item Index algorithm iterations by $t$ and initialize parameters $(\beta_{(0)}, \eta_{(0)}, \nu_{(0)}, \tau_{(0)})$.
+%     \item Transform the regression data and group shocks using $W$:
+%         $$
+%         \tilde{y} = Wy, \quad \tilde{R} = WR,\quad \tilde{\nu}_{(0)} = WG\nu_{(0)}, 
+%         $$ where $G$ is a $N\times B$ matrix such that $G_{ib} = \mathbb{1}\{i\in b\}$
+%     \item  For $t=1,\ldots,T$, repeat the following steps:
+% \end{itemize}
+% \begin{enumerate}
+%     \item Sample $\beta_{(t+1)} \sim \mathcal{N}(m_{(t+1)}, Q^{-1}_{(t+1)})$, where
+%     \begin{align*}
+%         Q_{(t+1)} = \eta_{(t)}(\tilde{R}'\tilde{R}), \quad
+%         m_{(t+1)} = Q^{-1}_{(t+1)}\eta_{(t)}\tilde{R}'(\tilde{y}-\tilde{\nu}_{(t)})
+%     \end{align*}
+%     \item Sample $\eta_{(t+1)} \sim \text{Gamma}(a_{(t+1)},b_{(t+1)})$ where
+%     \begin{align*}
+%         a_{(t+1)} = \frac{N}{2}, \quad b_{(t+1)} = \frac{\hat{\varepsilon}_{(t+1)}' \hat{\varepsilon}_{(t+1)}}{2}, \quad 
+%         \hat{\varepsilon}_{(t+1)} = (\tilde{y}-\tilde{R}\beta_{(t+1)} - \tilde{\nu}_{(t)})
+%     \end{align*}
+%     \item Sample $\tau_{(t+1)} \sim \text{Gamma}(c_{(t+1)}, d_{(t+1)})$ where 
+%     $$
+%     c_{(t+1)} = \frac{B}{2}, \text{ and } d_{(t+1)} = \frac{\nu_{(t)}'\nu_{(t)}}{2}
+%     $$
+%     \item For each group $b = 1,\ldots, B$, sample 
+%     $
+%     \nu_{b,(t+1)} \sim \mathcal{N}(s_{b,(t+1)},p^{-1}_{b,(t+1)}),
+%     $ where
+%     \begin{align*}
+%         s_{b,(t+1)} &= \frac{\eta_{(t+1)} \overline{\nu_b}}{p_{(t+1)}},\quad p_{b,(t+1)} = n_b\eta_{(t+1)}  + \tau_{(t+1)}\\[10pt]
+%         \overline{\nu}_b &= {\frac 1 {n_b}} \sum_{i\in b} W_{ii}^2\left(\tilde{y_{i}} - \tilde{R_i}\cdot \beta_{(t+1)}\right), \quad n_b = \sum_{i\in b} W^2_{ii} 
+%     \end{align*}
+% \end{enumerate}
+
+
+% The steps in this routine make up a transition for a Markov process for $(\beta_{(t)}, \eta_{(t)}, \nu_{(y)}, \tau_{(t)})$. We run the algorithm for $T=500,000$ iterations, discarding the first 300 thousand as ``burn-in" samples to allow convergence onto the stationary distribution.
+\begin{comment}
+\begin{frame}[allowframebreaks]\fmt{Deriving posteriors for baseline $\pi$}
+    \bi
+    \i Given observations $i=1,\ldots, N$ and groups $b=1,\ldots, B$, we use a weighted regression model with group-specific random effects:
+    
+    \begin{equation}\label{eq:muni_likelihood}
+    y_{i} = R_{i}\cdot \beta + \nu_{b[i]} + \varepsilon_{i}, 
+\end{equation}
+    \i Group-specific shocks are $\text{i.i.d.}$ and homoscedastic, with $\text{Var}(\nu_b)=\tau^{-1}$.
+    \i Common shocks are i.i.d but heteroscedastic and have $\text{Cov}(\varepsilon) = \eta^{-1}\Omega$, with $\Omega$ diagonal.
+    \i Let W be a matrix of weights such that $WW' = \Omega$.
+    \i For $\theta$ case: observations are municipalities, groups are Amazonian water basins, $y_i$ is the log-value of cattle/hectare, and weights are the 2017 pasture area in each municipality.
+    \i For $\gamma$ case: observations are fine sites, groups are coarse sites, $y_i$ is the average log-CO$_2$ density in each site $i$, and $W = I$.
+    %\i We model coefficient parameters as having a conditional normal likelihood, and precision parameters as having a conditional gamma likelihood.
+    \i The model is parameterized by $(\beta, \eta, \nu, \tau)$
+    \bi
+    \i Coefficients $\beta$ are a vector of size $K\times1$, where $K$ is the number of geographical variables included in $R_i$.
+    \i Group-specific shocks $\nu$ are a vector of size $B\times1$.
+    \i Precision parameters $\eta$ and $\tau$ are scalars.
+    \ei
+    \i If pairs $(\beta, \eta)$ and $(\nu, \tau)$ have conditional normal-gamma priors, then conditional posteriors will also be normal-gamma by conjugacy.
+    \i We assume diffuse priors over parameters and use a Gibbs sampling routine to obtain posteriors distributions.
+    \In Gibbs sampling is a Markov chain Monte Carlo (MCMC) algorithm for sampling from a specified multivariate probability distribution when  sampling from the joint distribution is hard, but sampling from the conditional distribution is easier.
+    \i The steps in this routine make up a transition for a Markov process for $(\beta, \eta, \nu, \tau)$.
+    \bi
+    \i We run the algorithm for $T=500$k iterations, discarding the first 300k as ``burn-in" samples to allow convergence onto the stationary distribution.
+    \ei
+\ei
+\end{frame}
+
+\begin{frame}[allowframebreaks]\fmt{Gibbs sampling}
+    \begin{itemize}
+        \item Transform the regression data and group shocks using $W$:
+        $$
+        \tilde{y} = Wy, \quad \tilde{R} = WR,\quad \tilde{\nu}_{(t)} = WG\nu_{(t)}, 
+        $$ where $G$ is a $N\times B$ matrix such that $G_{ib} = \mathbb{1}\{i\in b\}$
+        
+        %\item Also, for notational convenience, let $\widetilde{\nu_{(t)}} = WG\nu_{(t)}$, where $G$ is a $N\times B$ matrix such that $G_{ib} = \mathbb{1}\{i\in b\}$
+
+        \item Index algorithm iterations by $t$, initialize parameters $(\beta_{(0)}, \eta_{(0)}, \nu_{(0)}, \tau_{(0)})$, and do the following for $t=1,\ldots,T$:
+    \end{itemize}
+    
+    \begin{enumerate}
+        \item Sample $\beta_{(t+1)} \sim \mathcal{N}(m_{(t+1)}, Q^{-1}_{(t+1)})$, where
+        \begin{align*}
+        Q_{(t+1)} = \eta_{(t)}(\tilde{R}'\tilde{R}), \quad
+        m_{(t+1)} = Q^{-1}_{(t+1)}\eta_{(t)}\tilde{R}'(\tilde{y}-\tilde{\nu}_{(t)})
+        \end{align*}
+            
+        \item Sample $\eta_{(t+1)} \sim \text{Gamma}(a_{(t+1)},b_{(t+1)})$ where
+            \begin{align*}
+            a_{(t+1)} &= \frac{N}{2} \text{ , } b_{(t+1)} = \frac{\hat{\varepsilon}_{(t+1)}' \hat{\varepsilon}_{(t+1)}}{2},\\[10pt]
+            \hat{\varepsilon}_{(t+1)} &= (\tilde{y}-\tilde{R}\beta_{(t+1)} - \tilde{\nu}_{(t)})
+            \end{align*}
+
+        \item Sample $\tau_{(t+1)} \sim \text{Gamma}(c_{(t+1)}, d_{(t+1)})$ where 
+    $$
+    c_{(t+1)} = \frac{B}{2}, \text{ and } d_{(t+1)} = \frac{\nu_{(t)}'\nu_{(t)}}{2}
+    $$
+
+    \item For each group $b = 1,\ldots, B$, sample 
+    $$
+    \nu_{b,(t+1)} \sim \mathcal{N}(s_{b,(t+1)},p^{-1}_{b,(t+1)}),
+    $$ where
+    \begin{align*}
+        s_{b,(t+1)} &= \frac{\eta_{(t+1)} \overline{\nu_b}}{p_{(t+1)}},\quad p_{b,(t+1)} = n_b\eta_{(t+1)}  + \tau_{(t+1)} \\[10pt]
+        \overline{\nu}_b &= {\frac 1 {n_b}} \sum_{i\in b} W_{ii}^2\left(\tilde{y_{i}} - \tilde{R_i}\cdot \beta_{(t+1)}\right), \quad n_b = \sum_{i\in b} W^2_{ii} 
+    \end{align*}
+
+    \end{enumerate}
+\end{frame}
+
+\end{comment}
+\begin{frame}
+\fmt{HMC - Setup}
+\bi
+\i Define vector $\rho := (\beta, \nu) \in \mathbb{R}^n$. We want to sample from:
+\begin{equation}
+\label{eq:target_distribution}
+g_d(\rho)d\pi(\rho) \; \propto \; \exp\left[-\frac 1 \xi  f(d, \rho)\right]d\pi(\rho)
+\end{equation}
+\i By taking logs, define potential energy term:
+
+$$
+\mathcal{U}(\rho):= \frac 1 \xi  f(d, \rho) - \log d\pi(\rho) 
+$$ 
+\i Consider an auxiliary ``momentum'' variable  $\omega\in R^n$ where $\omega \sim \mathcal{N}(0, M)$. Then the system Hamiltonian is given by:
+$$
+\mathcal{H}(\rho, \omega) :=  \mathcal{U}(\rho) + \frac{1}{2} \omega'M^{-1}\omega
+$$
+\ei
+\end{frame}
+
+\begin{frame} \fmt{Hamiltonian Dynamics}
+\bi
+\i We can simulate the motion of a point in our sample space using Hamilton's equations:
+
+\begin{equation}
+\label{eq:hamiltonian_dynamics}
+    \frac{d \rho}{d t} = \frac{\partial \mathcal{H}}{\partial \omega}, \quad \frac{d \omega}{d t}  = -\frac{\partial \mathcal{H}}{\partial \rho}
+\end{equation}
+
+\i Reversibility, invariance and volume preserving.
+\i $\mathcal{H}$, ``energy function'',   defines  canonical distribution. %with probability density function, $$ P( \beta, \mu)=\frac 1 Z \exp(-U(\beta))\exp(-K(\mu))$$
+with density
+$$
+P(\rho, \omega) = \frac{1}{Z} \exp\left(-\mathcal U(\rho)\right)\exp\left(-\frac{1}{2} \omega'M^{-1}\omega\right)
+$$ 
+\i Invariance $\Rightarrow$ dynamics moves in subset of constant prob.   \ei
+\end{frame}
+
+\begin{frame}
+\fmt{HMC - The algorithm}
+\vspace{-10pt}
+\begin{enumerate}
+    \item Initialize $\rho_{(0)}$ and sample momentum $\omega_{(0)} \sim N(0,M)$.
+
+    \item Generate a state proposal $(\tilde{\rho}_{(0)}, \tilde \omega_{(0)})$ by evolving its position according to dynamic system in \eqref{eq:hamiltonian_dynamics}, using the leapfrog integrator with step size $\epsilon$ for $L$ steps.
+\bi \i Preserves canonical probability\ei
+    \item Perform a Metropolis test for the state update
+          $(\rho_{(1)}, \omega_{(1)}) \leftarrow (\tilde{\rho}_{(0)}, \tilde \omega_{(0)})$, with the
+          acceptance probability:
+          \begin{equation*}
+              \min \left\{1, \ \exp \left( \mathcal{H}(\rho_{(0)}, \omega_{(0)}) - \mathcal{H}(\tilde{\rho}_{(0)}, \tilde \omega_{(0)}) \right) \right\}
+          \end{equation*}
+
+    \item Repeat steps 2-4 until 1000 samples (plus 500 burn-in samples) are drawn.
+\end{enumerate}\\[10pt]
+
+Note: We use the Stan software implementation, which uses the NUTS algorithm, an adaptive variant of HMC.
+\end{frame}
+
+%\begin{frame}
+%\fmt{HMC - The algorithm}
+
+%\begin{enumerate}
+   % \item 
+%\end{enumerate}
+%\end{frame}
+
+\begin{frame}
+\fmt{HMC - Solving for $g_d(\rho)$}
+We then iterate between solving the planner's problem for $d$ and sampling $\rho$ as follows:
+
+\begin{enumerate}
+    \item Initialize $\varphi_{(0)}$ as the transformed mean under $\pi$.
+    \item Solve the planner's problem for $d_{(0)}$ using $\varphi_{(0)}$.
+    \item Sample $\{ \rho_{(s)} \}^{4000}_{s=1}$ from expression (\ref{eq:target_distribution}) by running HMC simultaneously across 4 independent Markov chains, taking 1000 samples and 500 burn-in samples per chain.
+    \item Transform samples $\{ \beta_{(s)} \}^{4000}_{s=1}$ back into the $\varphi$ space, compute $\bar{\varphi}$ as the mean across samples, and update $\varphi$ using $\varphi_{(t+1)} := w \bar{\varphi} + (1-w) \varphi_{(t)}$, with $w=0.25$.
+    
+    \item Repeat steps 2- 4 until $||\varphi_{(t+1)} - \varphi_{(t)} ||_{\infty} < 0.001$.
+\end{enumerate}
+\end{frame}
+
+\section{References}
+\begin{frame}[allowframebreaks]\fmt{References}
+%\bibliographystyle{apalike}
+%\bibliography{academic_papers.bib}
+\bibliography{Clect,Amazon}
+\end{frame}
+
+\end{document}

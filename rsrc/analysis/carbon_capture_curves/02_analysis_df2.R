@@ -1,13 +1,12 @@
-# Carbon capture curve: ratio = AGB/gamma ~ 1 - exp(-alpha * (t0 + t))
-# NLS on mean ratio by integer age (binned), equal weight per bin
+# Same as 02_analysis.R but using combined_df_2 (Brazil raster)
 
 library(tidyverse)
 library(ggplot2)
 
-# ---- Load data ----
-load("data/calibration/carbon_capture_curves/combined_df.Rdata")
+# ---- Load data (df2) ----
+load("data/calibration/carbon_capture_curves/combined_df_2.Rdata")
 
-df <- combined_df %>%
+df <- combined_df_2 %>%
   filter(!is.na(agb), !is.na(sec), !is.na(gamma)) %>%
   filter(sec > 0, sec <= 30) %>%
   mutate(
@@ -16,7 +15,7 @@ df <- combined_df %>%
     age_bin = pmin(30L, pmax(1L, ceiling(sec)))
   )
 
-rm(combined_df)
+rm(combined_df_2)
 gc()
 
 # ---- Empirical ratio evolution (for plot) ----
@@ -34,7 +33,6 @@ emp_df <- tibble(
 )
 
 # ---- Parametric fit on binned data (mean ratio by integer age) ----
-# Equal weight per age bin
 alpha0 <- 0.06
 t0_0   <- 5
 alpha0 <- max(1e-6, alpha0)
@@ -50,27 +48,23 @@ m_nls <- nls(
 
 alpha_hat <- coef(m_nls)[["alpha"]]
 t0_hat    <- coef(m_nls)[["t0"]]
-beta_hat  <- 1  # fixed
+beta_hat  <- 1
 
-cat(sprintf("\nNLS estimates (beta=1):\nalpha_hat = %.5f\nt0_hat = %.2f\n",
+cat(sprintf("\nNLS estimates (df2, beta=1):\nalpha_hat = %.5f\nt0_hat = %.2f\n",
             alpha_hat, t0_hat))
 
 # ---- Curves for combined plot ----
-# NLS fitted: beta * (1 - exp(-alpha * (t0 + t))) (predicted ratio)
 nls_curve <- tibble(
   age = 0:30,
   value = beta_hat * (1 - exp(-alpha_hat * (t0_hat + age))),
   type = sprintf("NLS (alpha=%.3f, t0=%.1f)", alpha_hat, t0_hat)
 )
-# Theoretical curve
 theo_045 <- tibble(age = 0:30, value = 1 - exp(-0.045 * (0:30)),
   type = "Theoretical (alpha=0.045)")
 curve_all <- bind_rows(nls_curve, theo_045)
-
-# Empirical: use age_bin 1:30, add age 0 with NA or omit
 emp_plot <- emp_df %>% mutate(type = "Estimates from data")
 
-# ---- Combined plot (gamma_secondary_vegetation) ----
+# ---- Plot ----
 dir.create("output/figures/carbon_capture", recursive = TRUE, showWarnings = FALSE)
 
 p_main <- ggplot() +
@@ -91,13 +85,12 @@ p_main <- ggplot() +
   labs(
     x = "Age of secondary vegetation (years)",
     y = expression(ratio == AGB/gamma),
-    title = "Carbon capture curve"
+    title = "Carbon capture curve (Brazil raster, df2)"
   ) +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom")
 
-# Dynamic NLS label (params vary by run)
 nls_label <- sprintf("NLS (alpha=%.3f, t0=%.1f)", alpha_hat, t0_hat)
 p_main <- p_main +
   scale_color_manual(
@@ -109,9 +102,8 @@ p_main <- p_main +
     breaks = c("Estimates from data", nls_label, "Theoretical (alpha=0.045)")
   )
 
-ggsave("output/figures/carbon_capture/gamma_secondary_vegetation.png",
+ggsave("output/figures/carbon_capture/gamma_secondary_vegetation_df2.png",
        p_main, width = 8.5, height = 6)
 
-# Cleanup
 rm(df, m_dummy, emp_df, emp_plot, m_nls, nls_curve, theo_045, curve_all, p_main)
 gc()
