@@ -12,6 +12,7 @@
 library(tidyverse)
 library(tictoc)
 library(sf)
+library(stringi)
 
 # START TIMER
 tic(msg = "muniDivision2015_raw2clean.R script", log = TRUE)
@@ -74,9 +75,9 @@ raw_muni <-
   mutate(
     across(
       where(is.character),
-      \(x) iconv(x,
-        from = "UTF-8",
-        to = "ASCII//TRANSLIT"
+      \(x) stri_trans_general(
+        stri_enc_toutf8(x, is_unknown_8bit = TRUE),
+        "Latin-ASCII"
       )
     )
   )
