@@ -138,9 +138,9 @@ def load_site_data(num_sites: int, year: int = 2017, norm_fac: float = 1e9):
     forest_area = df[f"area_forest_{year}"].to_numpy()
 
     # Normalize Z and forest data
-    z /= norm_fac
-    zbar /= norm_fac
-    forest_area /= norm_fac
+    z = z / norm_fac
+    zbar = zbar / norm_fac
+    forest_area = forest_area / norm_fac
 
     return (zbar, z, forest_area)
 
@@ -180,9 +180,9 @@ def load_site_data_1995(num_sites: int, norm_fac: float = 1e9):
     forest_area_1995 = df["area_forest_1995"].to_numpy()
 
     # Normalize Z data
-    zbar_1995 /= norm_fac
-    z_1995 /= norm_fac
-    forest_area_1995 /= norm_fac
+    zbar_1995 = zbar_1995 / norm_fac
+    z_1995 = z_1995 / norm_fac
+    forest_area_1995 = forest_area_1995 / norm_fac
 
     (theta, gamma) = load_productivity_params(num_sites)
 
