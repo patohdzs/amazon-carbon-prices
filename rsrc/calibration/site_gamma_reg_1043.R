@@ -75,10 +75,10 @@ load("data/calibration/calibration_78_sites.Rdata")
 calib_1043 <- st_transform(calib_1043, st_crs(calib_df))
 
 
-mapping <- read.csv("data/config/1043_to_78_mapping.csv")
-intersections <- left_join(st_drop_geometry(calib_1043), mapping, by = "id") %>%
-  rename("id_group" = "group_id") %>%
-  st_sf(geometry = st_geometry(calib_1043))
+# Assign each 1043 site to the nearest 78-site centroid
+nearest_idx <- st_nearest_feature(st_centroid(calib_1043), st_centroid(calib_df))
+intersections <- calib_1043 %>%
+  mutate(id_group = nearest_idx)
 
 
 

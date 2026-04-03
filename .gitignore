@@ -9,6 +9,7 @@ map_id_group_comparison.R
 map_pengyu_groups.R
 map_projection_distortion.R
 map_rasterspace_vs_pengyu_groups.R
+test_nearest_centroid.R
 notebooks/carrot_tau_f_LEO.ipynb
 Rplots.pdf
 Rplots*.pdf
@@ -18,6 +19,7 @@ Rplots*.pdf
 
 job-outs/
 test/
+backup_baseline/
 
 # Data (ignored by default)
 data/*
