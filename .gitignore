@@ -2,13 +2,29 @@
 .vscode/
 .DS_Store
 
+# Scratch / local R mapping scripts + artifacts
+map_border_alignment.R
+map_group_comparison.R
+map_id_group_comparison.R
+map_pengyu_groups.R
+map_projection_distortion.R
+map_rasterspace_vs_pengyu_groups.R
+notebooks/carrot_tau_f_LEO.ipynb
+Rplots.pdf
+Rplots*.pdf
+.claude/
+
 
 
 job-outs/
 test/
 
-# Data
-data/
+# Data (ignored by default)
+data/*
+!data/config/
+data/config/*
+!data/config/README.md
+!data/config/1043_to_78_mapping.csv
 results/
 
 # Gams license

@@ -308,8 +308,6 @@ st_write(
 
 
 load("data/calibration/gamma_calibration_1043_sites.Rdata")
-calib_1043 <- calib_1043 %>%
-  mutate(id = id.x)
 
 calib_1043 <- calib_1043 %>%
   st_transform(st_crs(muni_data))

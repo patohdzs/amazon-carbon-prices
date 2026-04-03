@@ -11,6 +11,8 @@
 
 # SETUP
 
+dir.create(here::here("plots/calibration/78SitesModel"), recursive = TRUE, showWarnings = FALSE)
+
 library(sf)           
 library(dplyr)          
 library(ggplot2)         

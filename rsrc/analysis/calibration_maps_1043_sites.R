@@ -11,7 +11,9 @@
 
 # SETUP
 
-# Load all necessary 
+dir.create(here::here("plots/calibration/1043SitesModel"), recursive = TRUE, showWarnings = FALSE)
+
+# Load all necessary
 library(sf)           
 library(dplyr)          
 library(ggplot2)         

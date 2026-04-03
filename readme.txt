@@ -37,7 +37,7 @@ output: plots/calibration/1043SitesModel/map_z2017_1043Sites.png
 
 
 /// Table 1
-13. python pysrc/bash/shadow_price.py  (xi=1,5,10,1000 id =20...70) or use bash bash_files/shadow_price.sh
+13. ./run.sh -d   (runs shadow_price.py for xi=10000 id=60..70, conduction_det.py, and map_1043_det.R)
 
 
 
@@ -65,15 +65,8 @@ output: plots/1043-det/map_z0z30GammaTheta_1043Sites_allPrices_det.png
 
 
 
-/// hmc 
-16. python pysrc/bash/hmc_sampling.py --id ${id} --xi ${xi} --sites ${sites} --pee ${pee} (or use bash bash_files/hmc_sampling.sh)
-
-
-17. python pysrc/bash/relative_entropy.py --xi ${xi} --sites ${sites} --pee ${pee} (or use bash_files/relative_entropy.sh)
-
-
-
-18. python scripts/conduction_hmc.py
+/// hmc
+16-18. ./run.sh -h   (runs hmc_sampling.py, shadow_price.py, relative_entropy.py, conduction_hmc.py)
 
 output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 4)
 	output/tables/present_value_site_ambiguity_comparison_xi_1.0.tex (Table 16)
@@ -94,20 +87,7 @@ output: output/tables/present_value_site_ambiguity_comparison_xi_5.0.tex (Table 
 
 
 ///mpc
-
-
-
-19. bash bash_files/mpc_prepare.sh	 
-
-20. bash bash_files/mpc_hmc_sp.sh
-
-21. python pysrc/mpc/mpc_compute_sp.py
-
-22. bash bash_files/mpc_hmc.sh
-
-23. python pysrc/mpc/mpc_compute.py
-
-24. python scripts/mpc_trajectory.py
+19-24. ./run.sh -m   (runs mpc_simulating.py, mpc_hmc_sp.py, mpc_compute_sp.py, mpc_hmc.py, mpc_compute.py, mpc_trajectory.py)
 
 
 
