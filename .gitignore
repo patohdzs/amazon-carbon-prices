@@ -39,6 +39,7 @@ adjusted
 baseline
 *.hpp
 *.o
+stan_model/
 
 # Results
 output/
