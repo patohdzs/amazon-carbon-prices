@@ -3,6 +3,59 @@
 ## Requirements
 - Python >= 3.9, <3.12
 - Gurobi >= 10.0.3
+
+## Fresh Machine Mise en Place (macOS)
+
+Use this section when starting from a new Mac.
+
+### 1) Install command-line tooling
+```bash
+xcode-select --install
+```
+
+### 2) Install Homebrew (if missing)
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### 3) Install system dependencies
+```bash
+brew install python@3.11 r pkg-config gdal geos proj udunits cmake
+```
+
+These are needed for Python/R geospatial packages (`sf`, `terra`, `geopandas`) and build tooling.
+
+### 4) Install and license Gurobi
+1. Install Gurobi (>= 10.0.3) from Gurobi.
+2. Activate your license:
+```bash
+grbgetkey <YOUR-LICENSE-KEY>
+```
+3. Verify installation:
+```bash
+gurobi_cl --version
+```
+
+### 5) Clone project and enter repo
+```bash
+git clone <repo-url>
+cd amazon-carbon-prices
+```
+
+### 6) Put raw data in place
+You need:
+```
+data/raw/{esa,fgv,global_forest_watch,ibge,ipea,mapbiomas,seabpr,seeg,worldbank,worldclim}
+```
+
+### 7) Run project bootstrap
+```bash
+chmod +x run.sh
+./run.sh -s
+```
+
+This setup stage creates `.venv`, installs Python deps, installs CmdStan, and restores R packages from `renv.lock`.
+
 ## Data Requirements
 To replicate, make sure to download the raw data into the directory structure below:
 ```
@@ -21,26 +74,29 @@ To replicate, make sure to download the raw data into the directory structure be
         └── worldclim
 ```
 
-## Installation
+## Installation (Manual Alternative)
 
-0. Clone git repository and move into `project-amazon/`
-1. Create and activate a new virtual environment
-```
+If you do not use `./run.sh -s`, install manually:
+
+1. Create and activate a virtual environment
+```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
-2. Install python dependencies
-```
+2. Install Python dependencies
+```bash
 python -m pip install -e '.[all]'
 ```
-
 3. Install CmdStan
+```bash
+install_cmdstan --version 2.33.1 --overwrite
 ```
-install_cmdstan --overwrite
+4. Restore R dependencies
+```bash
+Rscript -e "renv::restore()"
 ```
-
-4. Install pre-commit hooks (required for contributors)
-```
+5. (Contributors) install pre-commit hooks
+```bash
 pre-commit install
 ```
 
@@ -128,6 +184,30 @@ rsrc/analysis/calibration_maps_1043_sites.R
 ./run.sh -a
 ```
 
+### Long Weekend Run (No Sleep)
+```bash
+mkdir -p logs
+LOG="logs/weekend_pipeline_$(date +%Y%m%d_%H%M%S).log"
+nohup caffeinate -imsu bash -lc './run.sh -spcrDdtHhrMma' > "$LOG" 2>&1 &
+echo $! > logs/weekend_pipeline.pid
+echo "PID: $(cat logs/weekend_pipeline.pid)"
+echo "LOG: $LOG"
+```
+
+Monitor:
+```bash
+tail -f "$LOG"
+```
+
+Stop:
+```bash
+kill "$(cat logs/weekend_pipeline.pid)"
+```
+
+Notes:
+- Keep machine plugged into power.
+- Use lowercase `-r` in the pipeline flag string.
+- Use `-T` instead of `-t` for terminal-only time-consistency checks.
 
 ## Contributing
 0. Open a new git branch
