@@ -413,7 +413,7 @@ def trajectory_diff(
     return
 
 
-def plot_transfers(num_sites=1043,pee=6.6, pa=41.11,solver="gams",kappa=2.094215255):
+def plot_transfers(num_sites=1043,pee=6.8, pa=41.11,solver="gams",kappa=2.094215255):
     
     
     

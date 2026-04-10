@@ -13,6 +13,7 @@ from typing import Optional, List
 from datetime import datetime
 from pathlib import Path
 import time
+import argparse
 
 from pysrc.analysis import value_decomposition
 from pysrc.optimization import PlannerSolution, solve_planner_problem
@@ -271,6 +272,174 @@ def earliest_tau_search(
         f'This is unexpected after validation - possible numerical issues.',
         UserWarning
     )
+    return None
+
+
+def tau0_feasibility_check(
+    X: np.ndarray,
+    Z: np.ndarray,
+    V: List[float],
+    W: List[float],
+    bf: float,
+    check_all_periods: bool,
+    terminal_rule: str,
+    terminal_year: int,
+    delta: float = 0.02,
+    kappa: float = 2.094215255,
+) -> bool:
+    """
+    Check whether tau_f=0 is feasible for a given bf.
+
+    Feasibility conditions:
+    - If check_all_periods=True: W[t] - fund[t] < V[t] for all t.
+    - Always enforce terminal condition according to terminal_rule at terminal_year.
+    """
+    if terminal_rule not in {"lt_zero", "lt_v"}:
+        raise ValueError(
+            f"Unknown terminal_rule='{terminal_rule}'. Use 'lt_zero' or 'lt_v'."
+        )
+
+    h = len(W)
+    if terminal_year < 0 or terminal_year >= h:
+        raise ValueError(f"terminal_year={terminal_year} is outside [0, {h-1}]")
+
+    fund_balance = compute_fund_balance(X, Z, bf, tau_f=0, delta=delta, kappa=kappa)
+
+    if check_all_periods:
+        if any(np.isnan(W[t]) for t in range(h)):
+            raise ValueError("W contains NaN values, cannot run all-period feasibility check.")
+        for t in range(h):
+            if W[t] - fund_balance[t] >= V[t]:
+                return False
+
+    terminal_value = W[terminal_year] - fund_balance[terminal_year]
+    if terminal_rule == "lt_zero":
+        return terminal_value < 0
+    return terminal_value < V[terminal_year]
+
+
+def smallest_bf_search_tau0(
+    X: np.ndarray,
+    Z: np.ndarray,
+    V: List[float],
+    W: List[float],
+    check_all_periods: bool,
+    terminal_rule: str,
+    terminal_year: int,
+    delta: float = 0.02,
+    kappa: float = 2.094215255,
+    tol: float = 1e-8,
+) -> Optional[float]:
+    """
+    Find the smallest non-negative bf that makes tau_f=0 feasible.
+
+    This search uses the linear structure of tau_f=0:
+      fund_balance_t(bf) = bf * fund_balance_t(1),
+    so constraints in bf are linear inequalities.
+
+    Returns
+    -------
+    float or None
+        Smallest bf (up to numerical tolerance) if feasible, else None.
+    """
+    if terminal_rule not in {"lt_zero", "lt_v"}:
+        raise ValueError(
+            f"Unknown terminal_rule='{terminal_rule}'. Use 'lt_zero' or 'lt_v'."
+        )
+
+    h = len(W)
+    if terminal_year < 0 or terminal_year >= h:
+        raise ValueError(f"terminal_year={terminal_year} is outside [0, {h-1}]")
+
+    if check_all_periods and any(np.isnan(W[t]) for t in range(h)):
+        raise ValueError("W contains NaN values, cannot run all-period bf search.")
+    if np.isnan(W[terminal_year]):
+        raise ValueError("W[terminal_year] is NaN, cannot run terminal bf search.")
+
+    # At tau=0, fund_balance is linear in bf, so evaluate once at bf=1.
+    fund_unit = compute_fund_balance(X, Z, bf=1.0, tau_f=0, delta=delta, kappa=kappa)
+
+    lower_bound = -np.inf
+    upper_bound = np.inf
+
+    def apply_constraint(t: int, threshold: float) -> bool:
+        """
+        Apply strict inequality:
+            W[t] - bf * fund_unit[t] < threshold
+        which is equivalent to:
+            bf * fund_unit[t] > W[t] - threshold
+        """
+        nonlocal lower_bound, upper_bound
+
+        s = fund_unit[t]
+        rhs = W[t] - threshold
+        eps = 1e-14
+
+        if abs(s) <= eps:
+            # No bf leverage at this t: must already satisfy strict inequality.
+            return 0.0 > rhs
+
+        bound = rhs / s
+        if s > 0:
+            lower_bound = max(lower_bound, bound)
+        else:
+            upper_bound = min(upper_bound, bound)
+        return True
+
+    if check_all_periods:
+        for t in range(h):
+            if not apply_constraint(t=t, threshold=V[t]):
+                return None
+
+    terminal_threshold = 0.0 if terminal_rule == "lt_zero" else V[terminal_year]
+    if not apply_constraint(t=terminal_year, threshold=terminal_threshold):
+        return None
+
+    # Enforce non-negative bf.
+    lower_bound = max(lower_bound, 0.0)
+
+    # Because inequalities are strict, the feasible interval is (lower_bound, upper_bound).
+    if upper_bound <= lower_bound + tol:
+        return None
+
+    # Prefer bf=0 exactly when feasible and admissible.
+    if lower_bound == 0.0 and tau0_feasibility_check(
+        X=X,
+        Z=Z,
+        V=V,
+        W=W,
+        bf=0.0,
+        check_all_periods=check_all_periods,
+        terminal_rule=terminal_rule,
+        terminal_year=terminal_year,
+        delta=delta,
+        kappa=kappa,
+    ):
+        return 0.0
+
+    candidate = lower_bound + tol
+    if candidate >= upper_bound:
+        return None
+
+    # Guard against floating-point edge cases near strict boundaries.
+    for _ in range(10):
+        if tau0_feasibility_check(
+            X=X,
+            Z=Z,
+            V=V,
+            W=W,
+            bf=candidate,
+            check_all_periods=check_all_periods,
+            terminal_rule=terminal_rule,
+            terminal_year=terminal_year,
+            delta=delta,
+            kappa=kappa,
+        ):
+            return candidate
+        candidate += tol
+        if candidate >= upper_bound:
+            return None
+
     return None
 
 
@@ -604,12 +773,11 @@ def _run_workflow(
 
     print("\n[Step 5] Finding optimal tau...")
     step_start = time.time()
-    bf_candidates = [3.0, 3.5]
-    if all(abs(bf - candidate) > 1e-12 for candidate in bf_candidates):
-        bf_candidates.append(float(bf))
+    bf_candidates = [0.15 * float(b), 0.20 * float(b)]
+    bf_candidate_label = ", ".join(f"{candidate:.6f}" for candidate in bf_candidates)
     tau_results = []
     if check_all_periods:
-        print("  Running earliest_tau_search for bf in {3.0, 3.5}:")
+        print(f"  Running earliest_tau_search for bf in {{{bf_candidate_label}}}:")
         print("    1) W[t] - fund_balance[t] < V[t] for all t")
         print(f"    2a) W({terminal_year}) - fund_balance({terminal_year}) < 0")
         print(f"    2b) W({terminal_year}) - fund_balance({terminal_year}) < V({terminal_year})")
@@ -659,7 +827,7 @@ def _run_workflow(
                 f"tau_f[terminal<V[last]]={tau_lt_v_text}"
             )
     else:
-        print("  Running terminal-only tau search for bf in {3.0, 3.5}:")
+        print(f"  Running terminal-only tau search for bf in {{{bf_candidate_label}}}:")
         print(f"    2a) W({terminal_year}) - fund_balance({terminal_year}) < 0")
         print(f"    2b) W({terminal_year}) - fund_balance({terminal_year}) < V({terminal_year})")
         last_year = terminal_year
@@ -720,6 +888,45 @@ def _run_workflow(
                 f"tau_f[terminal<V[last]]={tau_lt_v_text}"
             )
 
+    print("\n  Running smallest bf search for fixed tau_f=0:")
+    if check_all_periods:
+        print("    1) W[t] - fund_balance[t] < V[t] for all t")
+    else:
+        print(f"    1) Terminal-only mode at t={terminal_year} (no all-period checks)")
+    print(f"    2a) W({terminal_year}) - fund_balance({terminal_year}) < 0")
+    print(f"    2b) W({terminal_year}) - fund_balance({terminal_year}) < V({terminal_year})")
+
+    bf_tau0_lt_zero = smallest_bf_search_tau0(
+        X=results.X,
+        Z=results.Z,
+        V=V,
+        W=W,
+        check_all_periods=check_all_periods,
+        terminal_rule="lt_zero",
+        terminal_year=terminal_year,
+        delta=delta,
+        kappa=kappa,
+    )
+    bf_tau0_lt_v = smallest_bf_search_tau0(
+        X=results.X,
+        Z=results.Z,
+        V=V,
+        W=W,
+        check_all_periods=check_all_periods,
+        terminal_rule="lt_v",
+        terminal_year=terminal_year,
+        delta=delta,
+        kappa=kappa,
+    )
+
+    bf_tau0_lt_zero_text = "NA" if bf_tau0_lt_zero is None else f"{bf_tau0_lt_zero:.8f}"
+    bf_tau0_lt_v_text = "NA" if bf_tau0_lt_v is None else f"{bf_tau0_lt_v:.8f}"
+    print(
+        "  ✓ smallest bf with tau_f=0 -> "
+        f"bf_min[terminal<0]={bf_tau0_lt_zero_text}, "
+        f"bf_min[terminal<V[last]]={bf_tau0_lt_v_text}"
+    )
+
     elapsed = time.time() - step_start
     print(f"\n✓ Step 5 complete in {elapsed:.2f} seconds")
 
@@ -746,10 +953,12 @@ def _run_workflow(
             f"using tau_f={tau_optimal} from terminal<V[last] for Step 6."
         )
 
+    selected_bf = float(selected_result["bf"])
+
     print(f"\n[Step 6] Computing fund balance with optimal tau={tau_optimal}...")
     step_start = time.time()
     print("  Parameters:")
-    print(f"    Fund contribution rate (bf): ${bf:.2f}/ton CO2")
+    print(f"    Fund contribution rate (bf): ${selected_bf:.2f}/ton CO2")
     print(f"    Interest start year (tau): {tau_optimal}")
     print(f"    Discount rate (delta): {delta}")
     print(f"    Emissions factor (kappa): {kappa} tons CO2/hectare")
@@ -758,7 +967,7 @@ def _run_workflow(
     fund_balance_optimal = compute_fund_balance(
         X=results.X,
         Z=results.Z,
-        bf=bf,
+        bf=selected_bf,
         tau_f=tau_optimal,
         delta=delta,
         kappa=kappa,
@@ -816,7 +1025,7 @@ def _run_workflow(
         )
         plt.xlabel("Time (years)")
         plt.ylabel("$ billion")
-        plt.title(f"Value Paths for b={b}, bf={bf} (Optimal tau={tau_optimal})")
+        plt.title(f"Value Paths for b={b}, bf={selected_bf} (Optimal tau={tau_optimal})")
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -838,7 +1047,8 @@ def _run_workflow(
             "pee": pee,
             "pa": pa,
             "b": b,
-            "bf": bf,
+            "bf_input": bf,
+            "bf": selected_bf,
             "tau_f": tau_optimal,
             "T": T,
             "h": h,
@@ -894,6 +1104,7 @@ def main(
     save_to_h5: bool,
     generate_plots: bool,
     output_dir: str = None,
+    check_all_periods: bool = True,
 ):
     return _run_workflow(
         b=b,
@@ -909,17 +1120,41 @@ def main(
         save_to_h5=save_to_h5,
         generate_plots=generate_plots,
         output_dir=output_dir,
-        check_all_periods=True,
+        check_all_periods=check_all_periods,
     )
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Run time-consistency workflow."
+    )
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
+        "--check-all-periods",
+        dest="check_all_periods",
+        action="store_true",
+        help="Solve defection values for all periods and enforce no-defection at all t (default).",
+    )
+    mode_group.add_argument(
+        "--terminal-only",
+        dest="check_all_periods",
+        action="store_false",
+        help="Solve only terminal defection value and enforce terminal criterion only.",
+    )
+    parser.set_defaults(check_all_periods=True)
+    cli_args = parser.parse_args()
+
     print("Starting time-consistency workflow...\n", flush=True)
+    if cli_args.check_all_periods:
+        print("Mode: check_all_periods=True (full no-defection path checks)\n", flush=True)
+    else:
+        print("Mode: check_all_periods=False (terminal-only checks)\n", flush=True)
+
     try:
         main(
-            b=22,
-            bf=3,
-            pee=6.6,
+            b=25,
+            bf=3.75,
+            pee=6.8,
             pa=41.11,
             num_sites=1043,
             T=200,
@@ -930,6 +1165,7 @@ if __name__ == "__main__":
             save_to_h5=False,
             generate_plots=False,
             output_dir=None,
+            check_all_periods=cli_args.check_all_periods,
         )
     except KeyboardInterrupt:
         print("\n\n" + "=" * 80)

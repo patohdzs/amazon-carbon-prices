@@ -1,43 +1,58 @@
 #!/bin/bash
 
-# Full replication pipeline: ./run.sh -spcdtmha
-# Or run individual stages: ./run.sh -s, ./run.sh -p, etc.
+# Full replication pipeline: ./run.sh -spcrDdtHhRMma
+# Or run individual stages: ./run.sh -s, ./run.sh -D, etc.
 #
 # Flags:
 #   -s  Setup (venv, Python/R packages, CmdStan)
 #   -p  Processing (data/raw -> data/clean -> data/processed)
 #   -c  Calibration (data/processed -> data/calibration, baseline sampling)
-#   -d  Deterministic model (shadow prices, optimization, maps)
-#   -t  Time-consistency tau_f checks
-#   -h  HMC ambiguity model (adjusted sampling, shadow prices, relative entropy)
-#   -m  MPC price-risk model (MC samples, shadow prices, optimization)
+#   -D  Deterministic shadow price calibration (prints calibrated pee)
+#   -d  Deterministic model (optimization, maps — requires calibrated pee from -D)
+#   -t  Time-consistency tau_f checks (full mode: check all periods)
+#   -T  Time-consistency tau_f checks (terminal-only mode)
+#   -H  HMC shadow price calibration (prints calibrated pee per xi)
+#   -r  HMC adjusted sampling + relative entropy
+#   -h  HMC conduction (optimization, figures — requires calibrated pee from -H)
+#   -M  MPC shadow price calibration (MC samples, shadow price search, prints pee)
+#   -m  MPC optimization + post-processing (requires calibrated pee from -M)
 #   -a  Analysis (remaining figures, tables, maps)
 
 set -e
 
 usage() {
-    echo "Usage: $0 [-spcdtmha]" 1>&2
+    echo "Usage: $0 [-spcrDdTtHhRMma]" 1>&2
     exit 1
 }
 
 setup_flag='false'
 processing_flag='false'
 calibration_flag='false'
+det_sp_flag='false'
 det_model_flag='false'
 time_consistency_flag='false'
-mpc_model_flag='false'
+time_consistency_check_all_periods='true'
+hmc_sp_flag='false'
+hmc_sampling_flag='false'
 hmc_model_flag='false'
+mpc_sp_flag='false'
+mpc_model_flag='false'
 analysis_flag='false'
 
-while getopts 'spcdtmha' flag; do
+while getopts 'spcrDdTtHhMma' flag; do
     case "${flag}" in
     s) setup_flag='true' ;;
     p) processing_flag='true' ;;
     c) calibration_flag='true' ;;
+    r) hmc_sampling_flag='true' ;;
+    D) det_sp_flag='true' ;;
     d) det_model_flag='true' ;;
-    t) time_consistency_flag='true' ;;
-    m) mpc_model_flag='true' ;;
+    t) time_consistency_flag='true'; time_consistency_check_all_periods='true' ;;
+    T) time_consistency_flag='true'; time_consistency_check_all_periods='false' ;;
+    H) hmc_sp_flag='true' ;;
     h) hmc_model_flag='true' ;;
+    M) mpc_sp_flag='true' ;;
+    m) mpc_model_flag='true' ;;
     a) analysis_flag='true' ;;
     *) usage ;;
     esac
@@ -116,15 +131,24 @@ if [ "$calibration_flag" = "true" ]; then
 fi
 
 # ============================================================================
-# -d  DETERMINISTIC MODEL
+# -D  DETERMINISTIC SHADOW PRICE CALIBRATION
 # ============================================================================
-if [ "$det_model_flag" = "true" ]; then
+if [ "$det_sp_flag" = "true" ]; then
     echo "Running deterministic shadow price calibration..."
     for id in $(seq 60 70); do
         python3 pysrc/bash/shadow_price.py --xi 10000 --sites 1043 --id "$id"
     done
     echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee in scripts/conduction_det.py,"
+    echo "    scripts/conduction_hmc.py, and pysrc/analysis/time_consistency.py"
+    echo "    before running -d, -t, or -h."
+fi
 
+# ============================================================================
+# -d  DETERMINISTIC MODEL (requires calibrated pee from -D)
+# ============================================================================
+if [ "$det_model_flag" = "true" ]; then
     echo "Running deterministic model..."
     python3 scripts/conduction_det.py
     echo "Done!"
@@ -138,15 +162,44 @@ fi
 # -t  TIME CONSISTENCY TAU_F CHECKS
 # ============================================================================
 if [ "$time_consistency_flag" = "true" ]; then
-    echo "Running time-consistency tau_f checks..."
-    python3 pysrc/analysis/time_consistency.py
+    if [ "$time_consistency_check_all_periods" = "true" ]; then
+        echo "Running time-consistency tau_f checks (all periods)..."
+        python3 pysrc/analysis/time_consistency.py --check-all-periods
+    else
+        echo "Running time-consistency tau_f checks (terminal-only)..."
+        python3 pysrc/analysis/time_consistency.py --terminal-only
+    fi
     echo "Done!"
 fi
 
 # ============================================================================
-# -h  HMC AMBIGUITY MODEL
+# -H  HMC SHADOW PRICE CALIBRATION
 # ============================================================================
-if [ "$hmc_model_flag" = "true" ]; then
+if [ "$hmc_sp_flag" = "true" ]; then
+    echo "Running HMC shadow price calibration..."
+    for xi in 0.5 1 2; do
+        if [[ "$xi" == "0.5" ]]; then
+            idarray=($(seq 20 39))
+        elif [[ "$xi" == "1" ]]; then
+            idarray=($(seq 40 50))
+        elif [[ "$xi" == "2" ]]; then
+            idarray=($(seq 50 60))
+        fi
+        for id in "${idarray[@]}"; do
+            python3 pysrc/bash/shadow_price.py --id "$id" --xi "$xi" --sites 1043
+        done
+    done
+    echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee values in scripts/conduction_hmc.py"
+    echo "    and the peearray values in this script's -r and -h stages"
+    echo "    before running -r or -h."
+fi
+
+# ============================================================================
+# -r  HMC ADJUSTED SAMPLING + RELATIVE ENTROPY
+# ============================================================================
+if [ "$hmc_sampling_flag" = "true" ]; then
     echo "Running HMC adjusted sampling..."
     for xi in 0.5 1 2 10000; do
         if [[ "$xi" == "0.5" ]]; then
@@ -166,34 +219,24 @@ if [ "$hmc_model_flag" = "true" ]; then
     done
     echo "Done!"
 
-    echo "Running HMC shadow price calibration..."
-    for xi in 0.5 1 2; do
-        if [[ "$xi" == "0.5" ]]; then
-            idarray=($(seq 20 39))
-        elif [[ "$xi" == "1" ]]; then
-            idarray=($(seq 40 50))
-        elif [[ "$xi" == "2" ]]; then
-            idarray=($(seq 50 60))
-        fi
-        for id in "${idarray[@]}"; do
-            python3 pysrc/bash/shadow_price.py --id "$id" --xi "$xi" --sites 1043
-        done
-    done
-    echo "Done!"
-
     echo "Computing relative entropy..."
     python3 pysrc/bash/relative_entropy.py --xi 1.0 --sites 1043 --pee 4.7
     echo "Done!"
+fi
 
+# ============================================================================
+# -h  HMC CONDUCTION (requires calibrated pee from -H)
+# ============================================================================
+if [ "$hmc_model_flag" = "true" ]; then
     echo "Running HMC conduction..."
     python3 scripts/conduction_hmc.py
     echo "Done!"
 fi
 
 # ============================================================================
-# -m  MPC PRICE-RISK MODEL
+# -M  MPC SHADOW PRICE CALIBRATION
 # ============================================================================
-if [ "$mpc_model_flag" = "true" ]; then
+if [ "$mpc_sp_flag" = "true" ]; then
     echo "Preparing MPC Monte Carlo samples..."
     for type in baseline constrained shadow_price converge_uncon converge_con; do
         python3 pysrc/mpc/mpc_simulating.py --type "$type"
@@ -213,7 +256,15 @@ if [ "$mpc_model_flag" = "true" ]; then
     echo "Computing MPC shadow prices..."
     python3 pysrc/mpc/mpc_compute_sp.py
     echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee values in the -m config blocks below"
+    echo "    and in pysrc/mpc/mpc_compute.py before running -m."
+fi
 
+# ============================================================================
+# -m  MPC OPTIMIZATION + POST-PROCESSING (requires calibrated pee from -M)
+# ============================================================================
+if [ "$mpc_model_flag" = "true" ]; then
     echo "Running MPC optimization..."
     # Config block 1: det baseline (unconstrained)
     pee=6.3; xi=10000; trig=0; type="unconstrained"

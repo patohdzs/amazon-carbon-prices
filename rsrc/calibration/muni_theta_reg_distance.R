@@ -42,31 +42,34 @@ muni_data$lat <- centroids[, "Y"]
 
 
 
-map_basin_tf <- map_basin %>%
-  select(FEATURE_ID)
-
-muni_with_basin_full <- st_join(muni_data, map_basin_tf, join = st_nearest_feature)
-
-muni_to_reassign <- muni_with_basin_full %>%
-  filter(FEATURE_ID %in% c(11, 100, 112, 154, 256)) %>%
-  select(-FEATURE_ID)
-
-
-map_basin_tf_reassign <- map_basin %>%
-  select(FEATURE_ID) %>%
-  filter(!FEATURE_ID %in% c(11, 100, 107, 112, 154, 256))
-
-muni_to_reassign <- st_join(muni_to_reassign, map_basin_tf_reassign, join = st_nearest_feature)
-
-muni_with_basin <- bind_rows(
-  muni_with_basin_full %>% filter(!FEATURE_ID %in% c(11, 100, 112, 154, 256)),
-  muni_to_reassign
+# Assign each municipality to the basin with the largest overlap area
+muni_basin_inter <- st_intersection(
+  muni_data %>% select(muni_code),
+  map_basin %>% select(FEATURE_ID)
 )
+muni_basin_inter$overlap_area <- as.numeric(st_area(muni_basin_inter))
 
+largest_share <- muni_basin_inter %>%
+  st_drop_geometry() %>%
+  group_by(muni_code) %>%
+  slice_max(overlap_area, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(muni_code, FEATURE_ID)
 
+muni_data <- muni_data %>%
+  left_join(largest_share %>% rename(FEATURE_ID_area = FEATURE_ID), by = "muni_code") %>%
+  mutate(FEATURE_ID = FEATURE_ID_area) %>%
+  select(-FEATURE_ID_area)
 
-
-muni_data <- muni_with_basin
+# Fallback: if any municipality did not get a basin from overlap,
+# assign by nearest basin centroid.
+missing_basin_mask <- is.na(muni_data$FEATURE_ID)
+if (any(missing_basin_mask)) {
+  missing_centroids <- st_centroid(muni_data[missing_basin_mask, ])
+  basin_centroids <- st_centroid(map_basin)
+  nearest_idx <- st_nearest_feature(missing_centroids, basin_centroids)
+  muni_data$FEATURE_ID[missing_basin_mask] <- map_basin$FEATURE_ID[nearest_idx]
+}
 
 
 # Remove outliers from municipal data
@@ -75,6 +78,24 @@ muni_data <- muni_data[-c(142, 106, 112), ]
 # Filter out observations missing distance to capital
 muni_data <- muni_data %>%
   filter(!is.na(distance))
+
+# Municipalities assigned to basins with no regression observations
+# are reassigned to the nearest basin centroid that does appear in
+# the regression sample.
+reg_basins <- muni_data %>%
+  filter(slaughter_value_per_ha_2017 > 0, !is.na(slaughter_value_per_ha_2017)) %>%
+  pull(FEATURE_ID) %>%
+  unique()
+
+orphan_mask <- is.na(muni_data$FEATURE_ID) | !muni_data$FEATURE_ID %in% reg_basins
+
+if (any(orphan_mask)) {
+  orphan_centroids <- st_centroid(muni_data[orphan_mask, ])
+  reg_basin_geoms  <- map_basin %>% filter(FEATURE_ID %in% reg_basins)
+  reg_centroids    <- st_centroid(reg_basin_geoms)
+  nearest_reg      <- st_nearest_feature(orphan_centroids, reg_centroids)
+  muni_data$FEATURE_ID[orphan_mask] <- reg_basin_geoms$FEATURE_ID[nearest_reg]
+}
 
 # Theta regression
 theta_reg <- muni_data %>%
