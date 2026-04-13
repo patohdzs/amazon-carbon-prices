@@ -1,0 +1,499 @@
+#!/usr/bin/env bash
+
+# Full replication pipeline: ./run.sh -spcrDdTHhrMma
+# Or run individual stages: ./run.sh -s, ./run.sh -D, etc.
+#
+# Flags:
+#   -s  Setup (venv, Python/R packages, CmdStan)
+#   -p  Processing (data/raw -> data/clean -> data/processed)
+#   -c  Calibration (data/processed -> data/calibration, baseline sampling)
+#   -D  Deterministic shadow price calibration (prints calibrated pee)
+#   -d  Deterministic model (optimization, maps — requires calibrated pee from -D)
+#   -t  Time-consistency tau_f checks (full mode: check all periods)
+#   -T  Time-consistency tau_f checks (terminal-only mode)
+#   -H  HMC shadow price calibration (prints calibrated pee per xi)
+#   -r  HMC adjusted sampling + relative entropy
+#   -h  HMC conduction (optimization, figures — requires calibrated pee from -H)
+#   -M  MPC shadow price calibration (MC samples, shadow price search, prints pee)
+#   -m  MPC optimization + post-processing (requires calibrated pee from -M)
+#   -a  Analysis (remaining figures, tables, maps)
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${REPO_ROOT}"
+
+usage() {
+    echo "Usage: $0 [-spcrDdTtHhrMma]" 1>&2
+    exit 1
+}
+
+resolve_python_bin() {
+    local candidate
+    for candidate in python3.11 python3; do
+        if command -v "$candidate" &>/dev/null; then
+            if "$candidate" -c 'import sys; raise SystemExit(0 if (3, 9) <= sys.version_info[:2] < (3, 12) else 1)'; then
+                echo "$candidate"
+                return 0
+            fi
+        fi
+    done
+    return 1
+}
+
+run_macos_preflight() {
+    if [ "$(uname -s 2>/dev/null)" != "Darwin" ]; then
+        return 0
+    fi
+
+    if ! command -v brew &>/dev/null; then
+        echo "Homebrew is required on macOS for reproducible setup."
+        echo "Install Homebrew first: https://brew.sh/"
+        exit 1
+    fi
+
+    if [ -f "${REPO_ROOT}/Brewfile" ]; then
+        echo "Installing/checking Homebrew dependencies from Brewfile..."
+        brew bundle --file "${REPO_ROOT}/Brewfile"
+        echo "Done!"
+    fi
+
+    if [ -x "${SCRIPT_DIR}/preflight_macos.sh" ]; then
+        echo "Running macOS preflight checks..."
+        "${SCRIPT_DIR}/preflight_macos.sh"
+        echo "Done!"
+    else
+        echo "WARNING: ${SCRIPT_DIR}/preflight_macos.sh not found or not executable."
+    fi
+}
+
+setup_flag='false'
+processing_flag='false'
+calibration_flag='false'
+det_sp_flag='false'
+det_model_flag='false'
+time_consistency_flag='false'
+time_consistency_check_all_periods='true'
+hmc_sp_flag='false'
+hmc_sampling_flag='false'
+hmc_model_flag='false'
+mpc_sp_flag='false'
+mpc_model_flag='false'
+analysis_flag='false'
+CMDSTAN_VERSION="${CMDSTAN_VERSION:-2.37.0}"
+
+while getopts 'spcrDdTtHhMma' flag; do
+    case "${flag}" in
+    s) setup_flag='true' ;;
+    p) processing_flag='true' ;;
+    c) calibration_flag='true' ;;
+    r) hmc_sampling_flag='true' ;;
+    D) det_sp_flag='true' ;;
+    d) det_model_flag='true' ;;
+    t) time_consistency_flag='true'; time_consistency_check_all_periods='true' ;;
+    T) time_consistency_flag='true'; time_consistency_check_all_periods='false' ;;
+    H) hmc_sp_flag='true' ;;
+    h) hmc_model_flag='true' ;;
+    M) mpc_sp_flag='true' ;;
+    m) mpc_model_flag='true' ;;
+    a) analysis_flag='true' ;;
+    *) usage ;;
+    esac
+done
+
+# Generate a project-local .R/Makevars so R's build system finds compilers.
+# R ignores shell env vars (CC, FC, …); it reads its built-in Makeconf, then
+# overrides from ~/.R/Makevars or the file at R_MAKEVARS_USER.  On Apple Silicon
+# Macs, Makeconf hardcodes /usr/local or /opt/gfortran paths that don't exist
+# when using Homebrew-installed compilers.
+configure_r_makevars() {
+    if [ "$(uname -s 2>/dev/null)" != "Darwin" ]; then
+        return 0  # Linux distro R ships correct compiler paths
+    fi
+
+    local clang_path clangxx_path gfortran_path gfortran_libdir brew_prefix sdk_path sdk_cppflags sdk_ldflags
+    clang_path=""
+    clangxx_path=""
+    gfortran_path=""
+    gfortran_libdir=""
+    sdk_path=""
+    sdk_cppflags=""
+    sdk_ldflags=""
+    brew_prefix="$(brew --prefix 2>/dev/null || true)"
+
+    # --- clang ---
+    if command -v xcrun &>/dev/null; then
+        clang_path="$(xcrun --find clang 2>/dev/null || true)"
+        clangxx_path="$(xcrun --find clang++ 2>/dev/null || true)"
+    fi
+    [ -z "$clang_path" ]   && clang_path="$(command -v clang 2>/dev/null || true)"
+    [ -z "$clangxx_path" ] && clangxx_path="$(command -v clang++ 2>/dev/null || true)"
+
+    # --- gfortran ---
+    for candidate in gfortran gfortran-15 gfortran-14 gfortran-13 gfortran-12; do
+        if command -v "$candidate" &>/dev/null; then
+            gfortran_path="$(command -v "$candidate")"
+            break
+        fi
+    done
+
+    if [ -z "$clang_path" ] || [ -z "$gfortran_path" ]; then
+        echo "WARNING: skipping .R/Makevars (missing clang or gfortran)."
+        echo "  R source builds may fail. Try: brew install gcc"
+        return 0
+    fi
+
+    # --- gfortran library dir ---
+    local libfile
+    libfile="$("$gfortran_path" -print-file-name=libgfortran.dylib 2>/dev/null || true)"
+    if [ -n "$libfile" ] && [ "$libfile" != "libgfortran.dylib" ]; then
+        gfortran_libdir="$(dirname "$libfile")"
+    fi
+
+    # Explicit SDK flags help avoid missing system headers during R source builds.
+    if command -v xcrun &>/dev/null; then
+        sdk_path="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+    fi
+    if [ -n "$sdk_path" ]; then
+        sdk_cppflags="-isysroot ${sdk_path}"
+        sdk_ldflags="-isysroot ${sdk_path}"
+    fi
+
+    # --- write Makevars ---
+    mkdir -p "$(pwd)/.R"
+    cat > "$(pwd)/.R/Makevars" <<MAKEVARS
+# Auto-generated by run.sh — do not edit manually
+CC = ${clang_path}
+CXX = ${clangxx_path}
+CXX11 = ${clangxx_path}
+CXX14 = ${clangxx_path}
+CXX17 = ${clangxx_path}
+FC = ${gfortran_path}
+F77 = ${gfortran_path}
+FLIBS = ${gfortran_libdir:+-L${gfortran_libdir} }-lgfortran -lquadmath -lm
+CPPFLAGS += ${sdk_cppflags} ${brew_prefix:+-I${brew_prefix}/include}
+LDFLAGS += ${sdk_ldflags} ${gfortran_libdir:+-L${gfortran_libdir} }${brew_prefix:+-L${brew_prefix}/lib}
+MAKEVARS
+
+    export R_MAKEVARS_USER="$(pwd)/.R/Makevars"
+    echo "Generated .R/Makevars (R_MAKEVARS_USER=${R_MAKEVARS_USER})"
+}
+
+# ============================================================================
+# -s  SETUP
+# ============================================================================
+if [ "$setup_flag" = "true" ]; then
+    # Check/install reproducible macOS system toolchain first
+    run_macos_preflight
+
+    # Check prerequisites
+    python_bin="$(resolve_python_bin || true)"
+    if [ -z "${python_bin:-}" ]; then
+        echo "Python version is incompatible. Required: >=3.9 and <3.12."
+        echo "Try: brew install python@3.11"
+        exit 1
+    fi
+    echo "Using Python interpreter: $python_bin ($($python_bin --version 2>&1))"
+
+    if ! command -v Rscript &>/dev/null; then
+        echo "R is not installed. Please install R first."
+        exit 1
+    fi
+
+    # Create and activate virtual environment
+    echo "Creating Python virtual environment..."
+    "$python_bin" -m venv .venv
+    source .venv/bin/activate
+    echo "Done!"
+
+    # Upgrade packaging toolchain for reliable pyproject + editable installs on fresh machines
+    echo "Upgrading pip/setuptools/wheel..."
+    python -m pip install --upgrade pip setuptools wheel
+    echo "Done!"
+
+    # Install Python dependencies (pinned in pyproject.toml)
+    echo "Installing Python dependencies..."
+    if ! python -m pip install -e '.[notebooks,dev]'; then
+        echo "Editable install failed; retrying non-editable install..."
+        python -m pip install '.[notebooks,dev]'
+    fi
+    echo "Done!"
+
+    # Install CmdStan (modern pin compatible with current Apple clang toolchains)
+    echo "Installing CmdStan ${CMDSTAN_VERSION}..."
+    install_cmdstan --version "${CMDSTAN_VERSION}" --overwrite
+    echo "Done!"
+
+    # Configure R compiler paths before restoring packages
+    echo "Configuring R build toolchain..."
+    configure_r_makevars
+    echo "Done!"
+
+    # Install R dependencies (pinned in renv.lock)
+    echo "Restoring R packages..."
+    Rscript -e "renv::restore()"
+    echo "Done!"
+fi
+
+# Activate venv for all subsequent steps
+# Also set R_MAKEVARS_USER if .R/Makevars was previously generated by setup
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+fi
+if [ -f "$(pwd)/.R/Makevars" ] && [ -z "${R_MAKEVARS_USER:-}" ]; then
+    export R_MAKEVARS_USER="$(pwd)/.R/Makevars"
+fi
+
+# ============================================================================
+# -p  PROCESSING: data/raw -> data/clean -> data/processed
+# ============================================================================
+if [ "$processing_flag" = "true" ]; then
+    echo "Cleaning raw data..."
+    Rscript rsrc/cleaning/_masterfile.R
+    echo "Done!"
+
+    echo "Processing clean data..."
+    Rscript rsrc/processing/_masterfile.R
+    echo "Done!"
+fi
+
+# ============================================================================
+# -c  CALIBRATION: data/processed -> data/calibration + baseline sampling
+# ============================================================================
+if [ "$calibration_flag" = "true" ]; then
+    echo "Calibrating model parameters..."
+    Rscript rsrc/calibration/_masterfile.R
+    echo "Done!"
+
+    echo "Running baseline sampling (1043 sites)..."
+    python3 pysrc/sampling/baseline.py --sites 1043
+    echo "Done!"
+
+    echo "Running baseline sampling (78 sites)..."
+    python3 pysrc/sampling/baseline.py --sites 78
+    echo "Done!"
+fi
+
+# ============================================================================
+# -D  DETERMINISTIC SHADOW PRICE CALIBRATION
+# ============================================================================
+if [ "$det_sp_flag" = "true" ]; then
+    echo "Running deterministic shadow price calibration..."
+    for id in $(seq 60 70); do
+        python3 pysrc/bash/shadow_price.py --xi 10000 --sites 1043 --id "$id"
+    done
+    echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee in scripts/conduction_det.py,"
+    echo "    scripts/conduction_hmc.py, and pysrc/analysis/time_consistency.py"
+    echo "    before running -d, -t, or -h."
+fi
+
+# ============================================================================
+# -d  DETERMINISTIC MODEL (requires calibrated pee from -D)
+# ============================================================================
+if [ "$det_model_flag" = "true" ]; then
+    echo "Running deterministic model..."
+    python3 scripts/conduction_det.py
+    echo "Done!"
+
+    echo "Generating deterministic maps..."
+    Rscript rsrc/analysis/map_1043_det.R
+    echo "Done!"
+fi
+
+# ============================================================================
+# -t  TIME CONSISTENCY TAU_F CHECKS
+# ============================================================================
+if [ "$time_consistency_flag" = "true" ]; then
+    if [ "$time_consistency_check_all_periods" = "true" ]; then
+        echo "Running time-consistency tau_f checks (all periods)..."
+        python3 pysrc/analysis/time_consistency.py --check-all-periods
+    else
+        echo "Running time-consistency tau_f checks (terminal-only)..."
+        python3 pysrc/analysis/time_consistency.py --terminal-only
+    fi
+    echo "Done!"
+fi
+
+# ============================================================================
+# -H  HMC SHADOW PRICE CALIBRATION
+# ============================================================================
+if [ "$hmc_sp_flag" = "true" ]; then
+    echo "Running HMC shadow price calibration..."
+    for xi in 0.5 1 2; do
+        if [[ "$xi" == "0.5" ]]; then
+            idarray=($(seq 20 39))
+        elif [[ "$xi" == "1" ]]; then
+            idarray=($(seq 40 50))
+        elif [[ "$xi" == "2" ]]; then
+            idarray=($(seq 50 60))
+        fi
+        for id in "${idarray[@]}"; do
+            python3 pysrc/bash/shadow_price.py --id "$id" --xi "$xi" --sites 1043
+        done
+    done
+    echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee values in scripts/conduction_hmc.py"
+    echo "    and the peearray values in this script's -r and -h stages"
+    echo "    before running -r or -h."
+fi
+
+# ============================================================================
+# -r  HMC ADJUSTED SAMPLING + RELATIVE ENTROPY
+# ============================================================================
+if [ "$hmc_sampling_flag" = "true" ]; then
+    echo "Running HMC adjusted sampling..."
+    for xi in 0.5 1 2 10000; do
+        if [[ "$xi" == "0.5" ]]; then
+            peearray=(2.9)
+        elif [[ "$xi" == "1" ]]; then
+            peearray=(6.6 4.7)
+        elif [[ "$xi" == "2" ]]; then
+            peearray=(5.5)
+        else
+            peearray=(6.6 4.7)
+        fi
+        for pee in "${peearray[@]}"; do
+            for id in 0 10 15 20 25; do
+                python3 pysrc/bash/hmc_sampling.py --id "$id" --xi "$xi" --sites 1043 --pee "$pee"
+            done
+        done
+    done
+    echo "Done!"
+
+    echo "Computing relative entropy..."
+    python3 pysrc/bash/relative_entropy.py --xi 1.0 --sites 1043 --pee 4.7
+    echo "Done!"
+fi
+
+# ============================================================================
+# -h  HMC CONDUCTION (requires calibrated pee from -H)
+# ============================================================================
+if [ "$hmc_model_flag" = "true" ]; then
+    echo "Running HMC conduction..."
+    python3 scripts/conduction_hmc.py
+    echo "Done!"
+fi
+
+# ============================================================================
+# -M  MPC SHADOW PRICE CALIBRATION
+# ============================================================================
+if [ "$mpc_sp_flag" = "true" ]; then
+    echo "Preparing MPC Monte Carlo samples..."
+    for type in baseline constrained shadow_price converge_uncon converge_con; do
+        python3 pysrc/mpc/mpc_simulating.py --type "$type"
+    done
+    echo "Done!"
+
+    echo "Running MPC shadow price search..."
+    for xi in 0.5 1 10000; do
+        for type in unconstrained constrained; do
+            for pe in $(seq 5.0 0.1 6.3); do
+                python3 pysrc/mpc/mpc_hmc_sp.py --pe "$pe" --xi "$xi" --type "$type"
+            done
+        done
+    done
+    echo "Done!"
+
+    echo "Computing MPC shadow prices..."
+    python3 pysrc/mpc/mpc_compute_sp.py
+    echo "Done!"
+    echo ""
+    echo ">>> Update the calibrated pee values in the -m config blocks below"
+    echo "    and in pysrc/mpc/mpc_compute.py before running -m."
+fi
+
+# ============================================================================
+# -m  MPC OPTIMIZATION + POST-PROCESSING (requires calibrated pee from -M)
+# ============================================================================
+if [ "$mpc_model_flag" = "true" ]; then
+    echo "Running MPC optimization..."
+    # Config block 1: det baseline (unconstrained)
+    pee=6.3; xi=10000; trig=0; type="unconstrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+
+    # Config block 2: hmc xi=1 (unconstrained)
+    pee=6.0; xi=1; trig=1; type="unconstrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+
+    # Config block 3: hmc xi=0.5 (unconstrained)
+    pee=5.6; xi=0.5; trig=1; type="unconstrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+
+    # Config block 4: det baseline (constrained)
+    pee=6.0; xi=10000; trig=0; type="constrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+
+    # Config block 5: hmc xi=1 (constrained)
+    pee=5.7; xi=1; trig=1; type="constrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+
+    # Config block 6: hmc xi=0.5 (constrained)
+    pee=5.2; xi=0.5; trig=1; type="constrained"
+    pearray=($pee $(echo "$pee + 10" | bc) $(echo "$pee + 15" | bc) $(echo "$pee + 20" | bc) $(echo "$pee + 25" | bc))
+    for id in $(seq 1 50); do
+        for pe in "${pearray[@]}"; do
+            python3 pysrc/mpc/mpc_hmc.py --id "$id" --pe "$pe" --xi "$xi" --trig "$trig" --type "$type"
+        done
+    done
+    echo "Done!"
+
+    echo "Computing MPC results..."
+    python3 pysrc/mpc/mpc_compute.py
+    echo "Done!"
+
+    echo "Plotting MPC trajectories..."
+    python3 scripts/mpc_trajectory.py
+    echo "Done!"
+fi
+
+# ============================================================================
+# -a  ANALYSIS: remaining figures, tables, maps
+# ============================================================================
+if [ "$analysis_flag" = "true" ]; then
+    echo "Generating calibration maps..."
+    Rscript rsrc/analysis/calibration_maps_1043_sites.R
+    Rscript rsrc/analysis/calibration_maps_78_sites.R
+    echo "Done!"
+
+    echo "Running price estimation..."
+    python3 scripts/price_estimation.py
+    echo "Done!"
+
+    echo "Computing Bayesian R2..."
+    python3 scripts/bayesian_R2.py
+    echo "Done!"
+
+    echo "Generating HMC maps..."
+    Rscript rsrc/analysis/map_1043_hmc_xi05.R
+    Rscript rsrc/analysis/map_1043_hmc_xi1.R
+    echo "Done!"
+fi

@@ -33,7 +33,7 @@ This enforces the system stack expected by the project (`python@3.11`, `r`, `gda
 
 ### 5) Run preflight checks
 ```bash
-./scripts/preflight_macos.sh
+./bash/preflight_macos.sh
 ```
 
 If this fails, fix the reported issue first (toolchain path, SDK headers, missing Brew deps, or conflicting env vars).
@@ -109,10 +109,16 @@ python -m pip install -e '.[all]'
 install_cmdstan --version 2.37.0 --overwrite
 ```
 
-If you get `CmdStanInstallError: Command "make build" failed`, run `./scripts/preflight_macos.sh` and fix the reported CLT/SDK/toolchain issue first.
+If you get `CmdStanInstallError: Command "make build" failed`, run `./bash/preflight_macos.sh` and fix the reported CLT/SDK/toolchain issue first.
 4. Restore R dependencies
 ```bash
 Rscript -e "renv::restore()"
+```
+If `Matrix` fails with `fatal error: 'string.h' file not found`, regenerate the project-local R toolchain config and retry:
+```bash
+rm -f .R/Makevars
+./bash/preflight_macos.sh
+./run.sh -s
 ```
 5. (Contributors) install pre-commit hooks
 ```bash

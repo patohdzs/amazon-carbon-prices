@@ -111,7 +111,7 @@ fi
 
 if [[ "$failures" -gt 0 ]]; then
     echo "[preflight] ${failures} check(s) failed."
-    echo "[preflight] Fix the failures above, then rerun: ./scripts/preflight_macos.sh"
+    echo "[preflight] Fix the failures above, then rerun: ./bash/preflight_macos.sh"
     exit 1
 fi
 
