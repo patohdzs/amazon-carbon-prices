@@ -35,6 +35,25 @@ check_cmd() {
     fi
 }
 
+required_r_version_from_project() {
+    local version
+    version=""
+
+    if [[ -f ".R-version" ]]; then
+        version="$(head -n 1 .R-version | tr -d '[:space:]')"
+    elif [[ -f "renv.lock" ]]; then
+        version="$(sed -n '1,40p' renv.lock \
+            | sed -n 's/.*"Version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+            | head -n 1)"
+    fi
+
+    if [[ -n "$version" ]]; then
+        echo "$version"
+        return 0
+    fi
+    return 1
+}
+
 echo "[preflight] Running macOS toolchain checks..."
 
 check_cmd xcode-select "Run: xcode-select --install"
@@ -42,9 +61,34 @@ check_cmd xcrun "Run: xcode-select --install"
 check_cmd clang "Install/reinstall Command Line Tools."
 check_cmd make "Install Command Line Tools: xcode-select --install"
 check_cmd brew "Install Homebrew from https://brew.sh/"
+check_cmd rig "Install rig: brew install rig"
 check_cmd pkg-config "Install pkg-config: brew install pkg-config"
-check_cmd Rscript "Install R: brew install r"
 check_cmd gfortran "Install GNU Fortran: brew install gcc"
+
+required_r_version="$(required_r_version_from_project || true)"
+if [[ -n "$required_r_version" ]]; then
+    ok "Project requires R ${required_r_version} (from .R-version/renv.lock)."
+else
+    warn "Could not determine required R version from .R-version or renv.lock."
+fi
+
+if command -v Rscript >/dev/null 2>&1; then
+    ok "Rscript found at $(command -v Rscript)"
+    current_r_version="$(Rscript -e 'cat(paste0(R.version$major, ".", R.version$minor))' 2>/dev/null || true)"
+    if [[ -n "$required_r_version" && "$current_r_version" != "$required_r_version" ]]; then
+        fail "R version mismatch: current=${current_r_version}, required=${required_r_version}. Fix with: sudo rig add ${required_r_version} && sudo rig default ${required_r_version}"
+    elif [[ -n "$current_r_version" ]]; then
+        ok "R version is ${current_r_version}."
+    else
+        fail "Could not determine installed R version."
+    fi
+else
+    if [[ -n "$required_r_version" ]]; then
+        fail "Rscript not found. Install required R with: sudo rig add ${required_r_version} && sudo rig default ${required_r_version}"
+    else
+        fail "Rscript not found. Install R and rerun preflight."
+    fi
+fi
 
 if [[ -n "${SDKROOT:-}" ]]; then
     fail "SDKROOT is set to '${SDKROOT}'. Unset it before bootstrap: unset SDKROOT"

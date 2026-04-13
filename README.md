@@ -2,6 +2,7 @@
 
 ## Requirements
 - Python >= 3.9, <3.12
+- R == 4.4.1
 - Gurobi >= 10.0.3
 
 ## Fresh Machine Mise en Place (macOS)
@@ -29,16 +30,23 @@ cd amazon-carbon-prices
 brew bundle --file Brewfile
 ```
 
-This enforces the system stack expected by the project (`python@3.11`, `r`, `gdal`, `geos`, `proj`, `udunits`, `cmake`, `make`, `gcc`, `imagemagick@6`, etc.).
+This enforces the system stack expected by the project (`python@3.11`, `rig`, `gdal`, `geos`, `proj`, `udunits`, `cmake`, `make`, `gcc`, `imagemagick@6`, etc.).
 
-### 5) Run preflight checks
+### 5) Install the required R version
+```bash
+R_VERSION="$(cat .R-version)"
+sudo rig add "$R_VERSION"
+sudo rig default "$R_VERSION"
+```
+
+### 6) Run preflight checks
 ```bash
 ./bash/preflight_macos.sh
 ```
 
 If this fails, fix the reported issue first (toolchain path, SDK headers, missing Brew deps, or conflicting env vars).
 
-### 6) Install and license Gurobi
+### 7) Install and license Gurobi
 1. Install Gurobi (>= 10.0.3) from Gurobi.
 2. Activate your license:
 ```bash
@@ -49,13 +57,13 @@ grbgetkey <YOUR-LICENSE-KEY>
 gurobi_cl --version
 ```
 
-### 7) Put raw data in place
+### 8) Put raw data in place
 You need:
 ```
 data/raw/{esa,fgv,global_forest_watch,ibge,ipea,mapbiomas,seabpr,seeg,worldbank,worldclim}
 ```
 
-### 8) Run project bootstrap
+### 9) Run project bootstrap
 ```bash
 chmod +x run.sh
 ./run.sh -s
@@ -66,6 +74,7 @@ This setup stage:
 - creates `.venv` with a compatible Python (`>=3.9,<3.12`, preferring `python3.11`)
 - installs Python dependencies
 - installs CmdStan (default pin: `2.37.0`)
+- enforces the project R version in `.R-version` / `renv.lock`
 - restores R dependencies from `renv.lock`
 
 You can override the CmdStan version if needed:
@@ -110,7 +119,13 @@ install_cmdstan --version 2.37.0 --overwrite
 ```
 
 If you get `CmdStanInstallError: Command "make build" failed`, run `./bash/preflight_macos.sh` and fix the reported CLT/SDK/toolchain issue first.
-4. Restore R dependencies
+4. Install/select required R version
+```bash
+R_VERSION="$(cat .R-version)"
+sudo rig add "$R_VERSION"
+sudo rig default "$R_VERSION"
+```
+5. Restore R dependencies
 ```bash
 Rscript -e "renv::restore()"
 ```
@@ -127,7 +142,7 @@ export PKG_CONFIG_PATH="$(brew --prefix imagemagick@6)/lib/pkgconfig:${PKG_CONFI
 ./bash/preflight_macos.sh
 ./run.sh -s
 ```
-5. (Contributors) install pre-commit hooks
+6. (Contributors) install pre-commit hooks
 ```bash
 pre-commit install
 ```

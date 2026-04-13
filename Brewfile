@@ -1,7 +1,7 @@
 # Reproducible macOS bootstrap dependencies for amazon-carbon-prices
 
 brew "python@3.11"
-brew "r"
+brew "rig"
 brew "pkg-config"
 brew "gdal"
 brew "geos"

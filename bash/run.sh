@@ -42,6 +42,73 @@ resolve_python_bin() {
     return 1
 }
 
+required_r_version_from_project() {
+    local version
+    version=""
+
+    if [ -f "${REPO_ROOT}/.R-version" ]; then
+        version="$(head -n 1 "${REPO_ROOT}/.R-version" | tr -d '[:space:]')"
+    elif [ -f "${REPO_ROOT}/renv.lock" ]; then
+        version="$(sed -n '1,40p' "${REPO_ROOT}/renv.lock" \
+            | sed -n 's/.*"Version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+            | head -n 1)"
+    fi
+
+    if [ -n "$version" ]; then
+        echo "$version"
+        return 0
+    fi
+    return 1
+}
+
+installed_r_version() {
+    if ! command -v Rscript &>/dev/null; then
+        return 1
+    fi
+    Rscript -e 'cat(paste0(R.version$major, ".", R.version$minor))' 2>/dev/null
+}
+
+ensure_r_version_matches_project() {
+    local required_r current_r
+    required_r="$(required_r_version_from_project || true)"
+
+    if ! command -v Rscript &>/dev/null; then
+        echo "R is not installed."
+        if [ -n "$required_r" ]; then
+            echo "This project requires R ${required_r}."
+            echo "Install with:"
+            echo "  brew install rig"
+            echo "  sudo rig add ${required_r}"
+            echo "  sudo rig default ${required_r}"
+        else
+            echo "Install R first, then rerun setup."
+        fi
+        exit 1
+    fi
+
+    if [ -z "$required_r" ]; then
+        echo "WARNING: could not determine required R version from .R-version or renv.lock."
+        return 0
+    fi
+
+    current_r="$(installed_r_version || true)"
+    if [ -z "$current_r" ]; then
+        echo "Could not determine current R version."
+        exit 1
+    fi
+
+    if [ "$current_r" != "$required_r" ]; then
+        echo "R version mismatch: current=${current_r}, required=${required_r}."
+        echo "Switch R with:"
+        echo "  brew install rig"
+        echo "  sudo rig add ${required_r}"
+        echo "  sudo rig default ${required_r}"
+        exit 1
+    fi
+
+    echo "Using required R version: ${current_r}"
+}
+
 run_macos_preflight() {
     if [ "$(uname -s 2>/dev/null)" != "Darwin" ]; then
         return 0
@@ -219,10 +286,7 @@ if [ "$setup_flag" = "true" ]; then
     fi
     echo "Using Python interpreter: $python_bin ($($python_bin --version 2>&1))"
 
-    if ! command -v Rscript &>/dev/null; then
-        echo "R is not installed. Please install R first."
-        exit 1
-    fi
+    ensure_r_version_matches_project
 
     # Create and activate virtual environment
     echo "Creating Python virtual environment..."
