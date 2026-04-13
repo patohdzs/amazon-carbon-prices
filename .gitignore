@@ -1,6 +1,7 @@
 # System files
 .vscode/
 .DS_Store
+.R/
 
 # Scratch / local R mapping scripts + artifacts
 map_border_alignment.R

@@ -20,10 +20,29 @@ xcode-select --install
 
 ### 3) Install system dependencies
 ```bash
-brew install python@3.11 r pkg-config gdal geos proj udunits cmake
+brew install python@3.11 r pkg-config gdal geos proj udunits cmake make
 ```
 
 These are needed for Python/R geospatial packages (`sf`, `terra`, `geopandas`) and build tooling.
+
+### 3b) Verify `make` and compiler are available (required by CmdStan)
+CmdStan is compiled from source and requires `make` + C++ toolchain.
+
+```bash
+which make
+make --version
+xcrun --find clang++
+```
+
+If `make` is not found, use Homebrew GNU make and expose it as `make`:
+
+```bash
+brew install make
+export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
+hash -r
+which make
+make --version
+```
 
 ### 4) Install and license Gurobi
 1. Install Gurobi (>= 10.0.3) from Gurobi.
@@ -91,6 +110,8 @@ python -m pip install -e '.[all]'
 ```bash
 install_cmdstan --version 2.33.1 --overwrite
 ```
+
+If you get `CmdStanInstallError: Command "make build" failed`, re-check Step **3b** and make sure `make` is available in the same shell where you run `install_cmdstan`.
 4. Restore R dependencies
 ```bash
 Rscript -e "renv::restore()"
