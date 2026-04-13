@@ -68,6 +68,29 @@ run_macos_preflight() {
     fi
 }
 
+configure_macos_pkgconfig() {
+    if [ "$(uname -s 2>/dev/null)" != "Darwin" ]; then
+        return 0
+    fi
+
+    local im6_prefix im6_pc
+    im6_prefix="$(brew --prefix imagemagick@6 2>/dev/null || true)"
+    if [ -z "$im6_prefix" ]; then
+        echo "WARNING: imagemagick@6 not found; R package 'magick' may fail to build."
+        return 0
+    fi
+
+    im6_pc="${im6_prefix}/lib/pkgconfig"
+    if [ -d "$im6_pc" ]; then
+        if [ -n "${PKG_CONFIG_PATH:-}" ]; then
+            export PKG_CONFIG_PATH="${im6_pc}:${PKG_CONFIG_PATH}"
+        else
+            export PKG_CONFIG_PATH="${im6_pc}"
+        fi
+        echo "Configured PKG_CONFIG_PATH for imagemagick@6 (${im6_pc})."
+    fi
+}
+
 setup_flag='false'
 processing_flag='false'
 calibration_flag='false'
@@ -228,6 +251,7 @@ if [ "$setup_flag" = "true" ]; then
     # Configure R compiler paths before restoring packages
     echo "Configuring R build toolchain..."
     configure_r_makevars
+    configure_macos_pkgconfig
     echo "Done!"
 
     # Install R dependencies (pinned in renv.lock)

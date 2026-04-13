@@ -29,7 +29,7 @@ cd amazon-carbon-prices
 brew bundle --file Brewfile
 ```
 
-This enforces the system stack expected by the project (`python@3.11`, `r`, `gdal`, `geos`, `proj`, `udunits`, `cmake`, `make`, `gcc`, etc.).
+This enforces the system stack expected by the project (`python@3.11`, `r`, `gdal`, `geos`, `proj`, `udunits`, `cmake`, `make`, `gcc`, `imagemagick@6`, etc.).
 
 ### 5) Run preflight checks
 ```bash
@@ -117,6 +117,13 @@ Rscript -e "renv::restore()"
 If `Matrix` fails with `fatal error: 'string.h' file not found`, regenerate the project-local R toolchain config and retry:
 ```bash
 rm -f .R/Makevars
+./bash/preflight_macos.sh
+./run.sh -s
+```
+If `magick` fails with `Magick++.h file not found`, ensure ImageMagick 6 is installed and visible to `pkg-config`:
+```bash
+brew install imagemagick@6 pkg-config
+export PKG_CONFIG_PATH="$(brew --prefix imagemagick@6)/lib/pkgconfig:${PKG_CONFIG_PATH}"
 ./bash/preflight_macos.sh
 ./run.sh -s
 ```

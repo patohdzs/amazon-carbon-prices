@@ -42,6 +42,7 @@ check_cmd xcrun "Run: xcode-select --install"
 check_cmd clang "Install/reinstall Command Line Tools."
 check_cmd make "Install Command Line Tools: xcode-select --install"
 check_cmd brew "Install Homebrew from https://brew.sh/"
+check_cmd pkg-config "Install pkg-config: brew install pkg-config"
 check_cmd Rscript "Install R: brew install r"
 check_cmd gfortran "Install GNU Fortran: brew install gcc"
 
@@ -107,6 +108,26 @@ if [[ -f "Brewfile" ]]; then
     fi
 else
     warn "No Brewfile found in repo root."
+fi
+
+im6_prefix="$(brew --prefix imagemagick@6 2>/dev/null || true)"
+if [[ -z "$im6_prefix" ]]; then
+    fail "imagemagick@6 not found. Install with: brew install imagemagick@6"
+else
+    im6_pc_dir="${im6_prefix}/lib/pkgconfig"
+    im6_header="${im6_prefix}/include/ImageMagick-6/Magick++.h"
+    if [[ ! -f "$im6_header" ]]; then
+        fail "Missing Magick++ header at ${im6_header}. Reinstall imagemagick@6."
+    else
+        ok "Magick++ header found: ${im6_header}"
+    fi
+    if [[ -d "$im6_pc_dir" ]]; then
+        PKG_CONFIG_PATH="${im6_pc_dir}:${PKG_CONFIG_PATH:-}" pkg-config --exists Magick++ \
+            && ok "pkg-config can resolve Magick++." \
+            || fail "pkg-config cannot resolve Magick++. Try: export PKG_CONFIG_PATH='${im6_pc_dir}:\$PKG_CONFIG_PATH'"
+    else
+        fail "Missing pkg-config directory at ${im6_pc_dir}."
+    fi
 fi
 
 if [[ "$failures" -gt 0 ]]; then
