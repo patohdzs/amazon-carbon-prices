@@ -773,7 +773,7 @@ def _run_workflow(
 
     print("\n[Step 5] Finding optimal tau...")
     step_start = time.time()
-    bf_candidates = [0.15 * float(b), 0.20 * float(b)]
+    bf_candidates = [0.15 * float(b + bf), 0.20 * float(b + bf)]
     bf_candidate_label = ", ".join(f"{candidate:.6f}" for candidate in bf_candidates)
     tau_results = []
     if check_all_periods:
@@ -1152,7 +1152,7 @@ if __name__ == "__main__":
 
     try:
         main(
-            b=25,
+            b=21.25,
             bf=3.75,
             pee=6.8,
             pa=41.11,
