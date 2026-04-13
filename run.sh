@@ -133,6 +133,11 @@ if [ "$setup_flag" = "true" ]; then
         echo "Python3 is not installed. Please install Python first."
         exit 1
     fi
+    if ! python3 -c 'import sys; raise SystemExit(0 if (3, 9) <= sys.version_info[:2] < (3, 12) else 1)' ; then
+        echo "Python version is incompatible. Required: >=3.9 and <3.12."
+        echo "Try: brew install python@3.11"
+        exit 1
+    fi
 
     if ! command -v Rscript &>/dev/null; then
         echo "R is not installed. Please install R first."
@@ -145,9 +150,17 @@ if [ "$setup_flag" = "true" ]; then
     source .venv/bin/activate
     echo "Done!"
 
+    # Upgrade packaging toolchain for reliable pyproject + editable installs on fresh machines
+    echo "Upgrading pip/setuptools/wheel..."
+    python -m pip install --upgrade pip setuptools wheel
+    echo "Done!"
+
     # Install Python dependencies (pinned in pyproject.toml)
     echo "Installing Python dependencies..."
-    python -m pip install -e '.[all]'
+    if ! python -m pip install -e '.[notebooks,dev]'; then
+        echo "Editable install failed; retrying non-editable install..."
+        python -m pip install '.[notebooks,dev]'
+    fi
     echo "Done!"
 
     # Install CmdStan (pinned version matching cmdstanpy 1.2.0)
