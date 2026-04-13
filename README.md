@@ -6,9 +6,9 @@
 
 ## Fresh Machine Mise en Place (macOS)
 
-Use this section when starting from a new Mac.
+Use this section when starting from a brand-new Mac and a fresh clone.
 
-### 1) Install command-line tooling
+### 1) Install Apple Command Line Tools
 ```bash
 xcode-select --install
 ```
@@ -18,33 +18,27 @@ xcode-select --install
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### 3) Install system dependencies
+### 3) Clone and enter repo
 ```bash
-brew install python@3.11 r pkg-config gdal geos proj udunits cmake make
+git clone <repo-url>
+cd amazon-carbon-prices
 ```
 
-These are needed for Python/R geospatial packages (`sf`, `terra`, `geopandas`) and build tooling.
-
-### 3b) Verify `make` and compiler are available (required by CmdStan)
-CmdStan is compiled from source and requires `make` + C++ toolchain.
-
+### 4) Install pinned system dependencies
 ```bash
-which make
-make --version
-xcrun --find clang++
+brew bundle --file Brewfile
 ```
 
-If `make` is not found, use Homebrew GNU make and expose it as `make`:
+This enforces the system stack expected by the project (`python@3.11`, `r`, `gdal`, `geos`, `proj`, `udunits`, `cmake`, `make`, `gcc`, etc.).
 
+### 5) Run preflight checks
 ```bash
-brew install make
-export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
-hash -r
-which make
-make --version
+./scripts/preflight_macos.sh
 ```
 
-### 4) Install and license Gurobi
+If this fails, fix the reported issue first (toolchain path, SDK headers, missing Brew deps, or conflicting env vars).
+
+### 6) Install and license Gurobi
 1. Install Gurobi (>= 10.0.3) from Gurobi.
 2. Activate your license:
 ```bash
@@ -55,25 +49,29 @@ grbgetkey <YOUR-LICENSE-KEY>
 gurobi_cl --version
 ```
 
-### 5) Clone project and enter repo
-```bash
-git clone <repo-url>
-cd amazon-carbon-prices
-```
-
-### 6) Put raw data in place
+### 7) Put raw data in place
 You need:
 ```
 data/raw/{esa,fgv,global_forest_watch,ibge,ipea,mapbiomas,seabpr,seeg,worldbank,worldclim}
 ```
 
-### 7) Run project bootstrap
+### 8) Run project bootstrap
 ```bash
 chmod +x run.sh
 ./run.sh -s
 ```
 
-This setup stage creates `.venv`, installs Python deps, installs CmdStan, and restores R packages from `renv.lock`.
+This setup stage:
+- runs `brew bundle` and macOS preflight checks
+- creates `.venv` with a compatible Python (`>=3.9,<3.12`, preferring `python3.11`)
+- installs Python dependencies
+- installs CmdStan (default pin: `2.37.0`)
+- restores R dependencies from `renv.lock`
+
+You can override the CmdStan version if needed:
+```bash
+CMDSTAN_VERSION=2.37.0 ./run.sh -s
+```
 
 ## Data Requirements
 To replicate, make sure to download the raw data into the directory structure below:
@@ -108,10 +106,10 @@ python -m pip install -e '.[all]'
 ```
 3. Install CmdStan
 ```bash
-install_cmdstan --version 2.33.1 --overwrite
+install_cmdstan --version 2.37.0 --overwrite
 ```
 
-If you get `CmdStanInstallError: Command "make build" failed`, re-check Step **3b** and make sure `make` is available in the same shell where you run `install_cmdstan`.
+If you get `CmdStanInstallError: Command "make build" failed`, run `./scripts/preflight_macos.sh` and fix the reported CLT/SDK/toolchain issue first.
 4. Restore R dependencies
 ```bash
 Rscript -e "renv::restore()"

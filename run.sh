@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Full replication pipeline: ./run.sh -spcrDdtHhRMma
+# Full replication pipeline: ./run.sh -spcrDdTHhrMma
 # Or run individual stages: ./run.sh -s, ./run.sh -D, etc.
 #
 # Flags:
@@ -21,8 +21,47 @@
 set -e
 
 usage() {
-    echo "Usage: $0 [-spcrDdTtHhRMma]" 1>&2
+    echo "Usage: $0 [-spcrDdTtHhrMma]" 1>&2
     exit 1
+}
+
+resolve_python_bin() {
+    local candidate
+    for candidate in python3.11 python3; do
+        if command -v "$candidate" &>/dev/null; then
+            if "$candidate" -c 'import sys; raise SystemExit(0 if (3, 9) <= sys.version_info[:2] < (3, 12) else 1)'; then
+                echo "$candidate"
+                return 0
+            fi
+        fi
+    done
+    return 1
+}
+
+run_macos_preflight() {
+    if [ "$(uname -s 2>/dev/null)" != "Darwin" ]; then
+        return 0
+    fi
+
+    if ! command -v brew &>/dev/null; then
+        echo "Homebrew is required on macOS for reproducible setup."
+        echo "Install Homebrew first: https://brew.sh/"
+        exit 1
+    fi
+
+    if [ -f "Brewfile" ]; then
+        echo "Installing/checking Homebrew dependencies from Brewfile..."
+        brew bundle --file Brewfile
+        echo "Done!"
+    fi
+
+    if [ -x "scripts/preflight_macos.sh" ]; then
+        echo "Running macOS preflight checks..."
+        scripts/preflight_macos.sh
+        echo "Done!"
+    else
+        echo "WARNING: scripts/preflight_macos.sh not found or not executable."
+    fi
 }
 
 setup_flag='false'
@@ -38,6 +77,7 @@ hmc_model_flag='false'
 mpc_sp_flag='false'
 mpc_model_flag='false'
 analysis_flag='false'
+CMDSTAN_VERSION="${CMDSTAN_VERSION:-2.37.0}"
 
 while getopts 'spcrDdTtHhMma' flag; do
     case "${flag}" in
@@ -128,16 +168,17 @@ MAKEVARS
 # -s  SETUP
 # ============================================================================
 if [ "$setup_flag" = "true" ]; then
+    # Check/install reproducible macOS system toolchain first
+    run_macos_preflight
+
     # Check prerequisites
-    if ! command -v python3 &>/dev/null; then
-        echo "Python3 is not installed. Please install Python first."
-        exit 1
-    fi
-    if ! python3 -c 'import sys; raise SystemExit(0 if (3, 9) <= sys.version_info[:2] < (3, 12) else 1)' ; then
+    python_bin="$(resolve_python_bin || true)"
+    if [ -z "${python_bin:-}" ]; then
         echo "Python version is incompatible. Required: >=3.9 and <3.12."
         echo "Try: brew install python@3.11"
         exit 1
     fi
+    echo "Using Python interpreter: $python_bin ($($python_bin --version 2>&1))"
 
     if ! command -v Rscript &>/dev/null; then
         echo "R is not installed. Please install R first."
@@ -146,7 +187,7 @@ if [ "$setup_flag" = "true" ]; then
 
     # Create and activate virtual environment
     echo "Creating Python virtual environment..."
-    python3 -m venv .venv
+    "$python_bin" -m venv .venv
     source .venv/bin/activate
     echo "Done!"
 
@@ -163,9 +204,9 @@ if [ "$setup_flag" = "true" ]; then
     fi
     echo "Done!"
 
-    # Install CmdStan (pinned version matching cmdstanpy 1.2.0)
-    echo "Installing CmdStan..."
-    install_cmdstan --version 2.33.1 --overwrite
+    # Install CmdStan (modern pin compatible with current Apple clang toolchains)
+    echo "Installing CmdStan ${CMDSTAN_VERSION}..."
+    install_cmdstan --version "${CMDSTAN_VERSION}" --overwrite
     echo "Done!"
 
     # Configure R compiler paths before restoring packages
