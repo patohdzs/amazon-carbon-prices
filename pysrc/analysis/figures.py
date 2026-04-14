@@ -155,7 +155,7 @@ def land_allocation(pee=7.6, num_sites=1043, solver="gurobi", pa=41.11, model="d
     return
 
 
-def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.6, model="det"):
+def density(pee=7.6, num_sites=78, solver="gurobi", pa=41.11, xi=1,pee_det=6.8, model="det"):
     output_folder = (
         str(get_path("output")) + f"/figures/density/site_{num_sites}/xi{xi}/"
     )

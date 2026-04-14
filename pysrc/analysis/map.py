@@ -12,7 +12,7 @@ from pysrc.services.file_service import get_path
 def spatial_allocation(solver='gams',
                        pa=41.11,
                        pe_hmc=4.5,
-                       pe_det=6.6,
+                       pe_det=6.8,
                        b=0,
                        xi=5.0,
                        num_sites=1043):
@@ -125,4 +125,3 @@ def spatial_allocation(solver='gams',
 
     
     return
-

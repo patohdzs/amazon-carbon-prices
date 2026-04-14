@@ -38,7 +38,7 @@ load(here::here("data/calibration/", "calibration_1043_sites.Rdata"))
 
 
 # 1043 SITES AGGREGATE PREDICTION
-aux.prices <- c(6.6, 16.6, 21.6, 26.6, 31.6)
+aux.prices <- c(6.8, 16.8, 21.8, 26.8, 31.8)
 
 
 
@@ -145,7 +145,7 @@ dir.create(here::here("plots/1043-det"), recursive = TRUE, showWarnings = FALSE)
 # z_2017_1043Sites
 z_2017_1043Sites <-
   ggplot2::ggplot(data = prediction.1043SitesModel %>%
-    dplyr::filter(time == 0, p_e == 21.6) %>%
+    dplyr::filter(time == 0, p_e == 21.8) %>%
     dplyr::mutate(z_t = cut(z_t,
       breaks = c(0, 0.000001, 20, 40, 60, 80, 105),
       include.lowest = T,
@@ -171,7 +171,7 @@ z_2017_1043Sites <-
 
 # gamma_1043Sites
 gamma_1043Sites <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 6.6) %>%
+  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 6.8) %>%
     dplyr::mutate(rank_gamma_1043Sites = cut(round(rank_gamma_1043Sites), breaks = c(1, 212, 423, 634, 845, 1043), include.lowest = T, dig.lab = 4))) +
   ggplot2::geom_sf(aes(fill = rank_gamma_1043Sites)) +
   ggplot2::scale_fill_brewer(name = expression(paste(gamma^"i", ~"(rank)")), palette = "YlOrRd", direction = -1) +
@@ -192,7 +192,7 @@ gamma_1043Sites <-
 
 # theta_1043Sites
 theta_1043Sites <-
-  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 6.6) %>%
+  ggplot2::ggplot(data = prediction.1043SitesModel %>% dplyr::filter(time == 0, p_e == 6.8) %>%
     dplyr::mutate(rank_theta_1043Sites = cut(round(rank_theta_1043Sites), breaks = c(1, 212, 423, 634, 845, 1043), include.lowest = T, dig.lab = 4))) +
   ggplot2::geom_sf(aes(fill = rank_theta_1043Sites)) +
   ggplot2::scale_fill_brewer(name = expression(paste(theta^"i", ~"(rank)")), palette = "YlOrRd", direction = -1) +
@@ -215,7 +215,7 @@ theta_1043Sites <-
 mapList <- list()
 mapIndex <- 1
 for (price in aux.prices) {
-  transfer <- price - 6.6
+  transfer <- price - 6.8
   # z50 map (vary by model)
   mapList[[mapIndex]] <-
     ggplot2::ggplot(data = prediction.1043SitesModel %>%
@@ -285,7 +285,7 @@ aux.years <- c(2017, 2022, 2027, 2032, 2037, 2047)
 # generate empty map list
 for (p in seq_along(aux.prices)) {
   aux.mapList <- list()
-  transfer <- aux.prices[p] - 6.6
+  transfer <- aux.prices[p] - 6.8
 
   for (y in seq_along(aux.years)) {
     # z50 map (vary by model)

@@ -27,7 +27,7 @@ num_sites=args.sites
 
 solver="gurobi"
 pa=41.11
-pee_det=6.6
+pee_det=6.8
 
 
 result_folder = os.path.join(

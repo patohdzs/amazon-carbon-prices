@@ -47,7 +47,7 @@ load(here::here("data/calibration/hmc/", "calibration_1043_sites.Rdata"))
 
 
 # 1043 SITES AGGREGATE PREDICTION
-aux.prices <- c(6.6, 16.6, 21.6, 26.6, 31.6)
+aux.prices <- c(6.8, 16.8, 21.8, 26.8, 31.8)
 
 
 
@@ -162,7 +162,7 @@ saveGIF(
     for (y in seq_along(aux.years)) {
       plot_b15 <-
         ggplot2::ggplot(data = prediction.1043SitesModel %>%
-          dplyr::filter(time == aux.years[y] - 2017, p_e == 21.6) %>%
+          dplyr::filter(time == aux.years[y] - 2017, p_e == 21.8) %>%
           dplyr::mutate(z_t = factor(
           cut(z_t,
               breaks = c(0, 0.0001, 20, 40, 60, 80, 105),
@@ -201,7 +201,7 @@ saveGIF(
 
       plot_b0 <-
         ggplot2::ggplot(data = prediction.1043SitesModel %>%
-          dplyr::filter(time == aux.years[y] - 2017, p_e == 6.6) %>%
+          dplyr::filter(time == aux.years[y] - 2017, p_e == 6.8) %>%
           dplyr::mutate(z_t = factor(
             cut(z_t,
                 breaks = c(0, 0.0001, 20, 40, 60, 80, 105),

@@ -438,11 +438,11 @@ if [ "$hmc_sampling_flag" = "true" ]; then
         if [[ "$xi" == "0.5" ]]; then
             peearray=(2.9)
         elif [[ "$xi" == "1" ]]; then
-            peearray=(6.6 4.7)
+            peearray=(6.8 4.7)
         elif [[ "$xi" == "2" ]]; then
             peearray=(5.5)
         else
-            peearray=(6.6 4.7)
+            peearray=(6.8 4.7)
         fi
         for pee in "${peearray[@]}"; do
             for id in 0 10 15 20 25; do
