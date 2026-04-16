@@ -436,13 +436,13 @@ if [ "$hmc_sampling_flag" = "true" ]; then
     echo "Running HMC adjusted sampling..."
     for xi in 0.5 1 2 10000; do
         if [[ "$xi" == "0.5" ]]; then
-            peearray=(2.9)
+            peearray=(2.8)
         elif [[ "$xi" == "1" ]]; then
-            peearray=(6.8 4.7)
+            peearray=(6.8 4.8)
         elif [[ "$xi" == "2" ]]; then
-            peearray=(5.5)
+            peearray=(5.6)
         else
-            peearray=(6.8 4.7)
+            peearray=(6.8 4.8)
         fi
         for pee in "${peearray[@]}"; do
             for id in 0 10 15 20 25; do
@@ -453,7 +453,7 @@ if [ "$hmc_sampling_flag" = "true" ]; then
     echo "Done!"
 
     echo "Computing relative entropy..."
-    python3 pysrc/bash/relative_entropy.py --xi 1.0 --sites 1043 --pee 4.7
+    python3 pysrc/bash/relative_entropy.py --xi 1.0 --sites 1043 --pee 4.8
     echo "Done!"
 fi
 
