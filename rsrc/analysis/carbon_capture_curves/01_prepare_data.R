@@ -20,10 +20,7 @@ first_existing_path <- function(candidates) {
 }
 
 # Study extent from calibration
-calibration_path <- first_existing_path(c(
-  "data/calibration/gamma_calibration_1043_sites.Rdata",
-  "data/processed/gamma_calibration_1043_sites.Rdata"
-))
+calibration_path <- "data/calibration/gamma_calibration_1043_sites.Rdata"
 load(calibration_path)
 calib_vect <- vect(calib_1043)
 
@@ -92,10 +89,7 @@ agb_resamp <- resample(combined_agb, sec_veg_age_agg, method = "near",
   filename = file.path(out_dir, "resampled_agb_aggregated.tif"), overwrite = TRUE)
 rm(combined_agb)
 
-gamma_params_path <- first_existing_path(c(
-  "data/calibration/productivity_params_1043.csv",
-  "data/calibration/hmc/productivity_params_1043.csv"
-))
+gamma_params_path <- "data/calibration/productivity_params_1043.csv"
 gamma_params <- read.csv(gamma_params_path)
 gamma_params$id <- seq_len(nrow(gamma_params))
 calib_bayesian <- calib_1043 %>%

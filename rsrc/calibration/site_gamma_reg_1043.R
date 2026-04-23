@@ -75,14 +75,37 @@ load("data/calibration/calibration_78_sites.Rdata")
 calib_1043 <- st_transform(calib_1043, st_crs(calib_df))
 
 
-# Assign each 1043 site to the nearest 78-site centroid
+# Assign each 1043 site by largest overlap (>1% of fine area), fallback to nearest centroid
 nearest_idx <- st_nearest_feature(st_centroid(calib_1043), st_centroid(calib_df))
+nearest_id <- calib_df$id[nearest_idx]
+
+best_overlap <- st_intersection(
+  calib_1043 %>%
+    mutate(fine_area = as.numeric(st_area(.))) %>%
+    select(id, fine_area),
+  calib_df %>%
+    select(id)
+) %>%
+  mutate(
+    ov_area = as.numeric(st_area(geometry)),
+    ov_share = ov_area / fine_area
+  ) %>%
+  st_drop_geometry() %>%
+  group_by(id.x) %>%
+  slice_max(ov_area, n = 1, with_ties = FALSE) %>%
+  mutate(id_group = if_else(ov_share > 0.01, id.y, NA_integer_)) %>%
+  ungroup()
+
 intersections <- calib_1043 %>%
-  mutate(id_group = nearest_idx)
+  mutate(
+    id_group = coalesce(
+      best_overlap$id_group[match(id, best_overlap$id.x)],
+      nearest_id
+    )
+  )
 
 
 
 calib_1043 <- intersections
 save(calib_1043, file = "data/calibration/gamma_calibration_1043_sites.Rdata")
-
 
