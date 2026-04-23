@@ -4,20 +4,6 @@ library(sf)
 library(terra)
 library(tidyverse)
 
-# Resolve input paths across branches (this branch keeps files in data/calibration)
-first_existing_path <- function(candidates) {
-  for (candidate in candidates) {
-    if (file.exists(candidate)) {
-      return(candidate)
-    }
-  }
-  stop(
-    sprintf(
-      "Required input not found. Tried: %s",
-      paste(candidates, collapse = ", ")
-    )
-  )
-}
 
 # Study extent from calibration
 calibration_path <- "data/calibration/gamma_calibration_1043_sites.Rdata"
