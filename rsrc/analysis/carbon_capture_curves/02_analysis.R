@@ -20,9 +20,10 @@ gc()
 
 # ---- Empirical ratio evolution (for plot) ----
 m_dummy <- lm(ratio ~ 0 + factor(age_bin), data = df)
+m_dummy_summary <- summary(m_dummy)
 
 coefs <- coef(m_dummy)
-ses   <- summary(m_dummy)$coefficients[, "Std. Error"]
+ses   <- m_dummy_summary$coefficients[, "Std. Error"]
 
 emp_df <- tibble(
   age_bin     = 1:30,
@@ -68,6 +69,9 @@ p_main <- ggplot() +
 ggsave("output/figures/carbon_capture/gamma_secondary_vegetation.png",
        p_main, width = 8.5, height = 6)
 
+cat("R2 =", m_dummy_summary$r.squared, "\n")
+cat("Adjusted R2 =", m_dummy_summary$adj.r.squared, "\n")
+
 # Cleanup
-rm(df, m_dummy, emp_df, emp_plot, m_nls, nls_curve, theo_045, curve_all, p_main)
+rm(df, m_dummy, m_dummy_summary, emp_df, emp_plot, theo_045, p_main)
 gc()

@@ -8,6 +8,42 @@ from pysrc.services.data_service import load_productivity_params, load_site_data
 from pysrc.services.file_service import get_path
 
 
+def first_year_total_xdot_decreasing(results: PlannerSolution, tol: float = 1e-10):
+    total_x = np.sum(results.X, axis=1)
+    total_x_dot = np.diff(total_x)
+    total_x_dot_nonincreasing = np.diff(total_x_dot) <= tol
+    suffix_nonincreasing = np.logical_and.accumulate(
+        total_x_dot_nonincreasing[::-1]
+    )[::-1]
+    valid_years = np.flatnonzero(suffix_nonincreasing)
+    if valid_years.size == 0:
+        return None
+    return int(valid_years[0])
+
+
+def print_terminal_diagnostics(results: PlannerSolution, b, pe):
+    max_z_100 = np.max(results.Z[100])
+    max_z_100_site = int(np.argmax(results.Z[100]) + 1)
+    print(
+        "Max z_i at t=100 "
+        f"(b={b}, pe={pe}) = {max_z_100:.15g} billion ha "
+        f"({max_z_100 * 1e9:.15g} ha), "
+        f"site={max_z_100_site}"
+    )
+
+    first_decreasing_year = first_year_total_xdot_decreasing(results)
+    if first_decreasing_year is None:
+        print(
+            "First year after which total x_dot is decreasing "
+            f"(b={b}, pe={pe}) = NA"
+        )
+    else:
+        print(
+            "First year after which total x_dot is decreasing "
+            f"(b={b}, pe={pe}) = {first_decreasing_year}"
+        )
+
+
 def get_optimization(
     solver="gurobi",
     num_sites=78,
@@ -32,7 +68,7 @@ def get_optimization(
         # Solve for all transfer levels
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
-        for pe in pe_values:
+        for bi, pe in zip(b, pe_values):
             results = solve_planner_problem(
                 time_horizon=200,
                 theta=theta_vals,
@@ -46,6 +82,7 @@ def get_optimization(
             )
 
             print("Results for pe = ", pe)
+            print_terminal_diagnostics(results, bi, pe)
             output_folder = (
                 get_path("output")
                 / "optimization"
@@ -71,7 +108,7 @@ def get_optimization(
         # Solve model for all transfer values
         b = [0, 10, 15, 20, 25]
         pe_values = [pee + bi for bi in b]
-        for pe in pe_values:
+        for bi, pe in zip(b, pe_values):
             # Load ambiguity-adjusted params
             with open(results_dir + f"/pe_{pe}/results.pcl", "rb") as f:
                 b = pickle.load(f)
@@ -95,6 +132,7 @@ def get_optimization(
                 solver=solver,
             )
             print("Results for pe = ", pe)
+            print_terminal_diagnostics(results, bi, pe)
 
             output_folder = (
                 get_path("output")
